@@ -1,26 +1,20 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 class _AnimatedBackgroundPainter extends StatefulWidget {
   const _AnimatedBackgroundPainter(
-      {Key? key,
-      required this.layoutController,
-      required this.editModeSettings,
-      required this.offset})
-      : super(key: key);
+      {required this.layoutController, required this.editModeSettings, required this.offset});
 
   final _DashboardLayoutController layoutController;
   final EditModeSettings editModeSettings;
   final ViewportOffset offset;
 
   @override
-  State<_AnimatedBackgroundPainter> createState() =>
-      _AnimatedBackgroundPainterState();
+  State<_AnimatedBackgroundPainter> createState() => _AnimatedBackgroundPainterState();
 }
 
 class _AnimatedBackgroundPainterState extends State<_AnimatedBackgroundPainter>
     with SingleTickerProviderStateMixin {
-  _ViewportDelegate get viewportDelegate =>
-      widget.layoutController._viewportDelegate;
+  _ViewportDelegate get viewportDelegate => widget.layoutController._viewportDelegate;
 
   Rect? fillRect;
 
@@ -33,8 +27,8 @@ class _AnimatedBackgroundPainterState extends State<_AnimatedBackgroundPainter>
   @override
   void initState() {
     offset = widget.offset.pixels;
-    _animationController = AnimationController(
-        vsync: this, duration: widget.editModeSettings.duration);
+    _animationController =
+        AnimationController(vsync: this, duration: widget.editModeSettings.duration);
     super.initState();
   }
 
@@ -61,18 +55,16 @@ class _AnimatedBackgroundPainterState extends State<_AnimatedBackgroundPainter>
         if (onAnimation && _last != null && _start != null) {
           begin = _last!;
 
-          _animationController.duration = (widget.editModeSettings.duration -
-                  DateTime.now().difference(_start!).abs())
-              .abs();
+          _animationController.duration =
+              (widget.editModeSettings.duration - DateTime.now().difference(_start!).abs()).abs();
         } else {
           _start = DateTime.now();
           _last = fillRect;
           _animationController.duration = widget.editModeSettings.duration;
         }
         _animationController.reset();
-        _animation = RectTween(begin: begin, end: rect).animate(CurvedAnimation(
-            parent: _animationController,
-            curve: widget.editModeSettings.curve));
+        _animation = RectTween(begin: begin, end: rect).animate(
+            CurvedAnimation(parent: _animationController, curve: widget.editModeSettings.curve));
         SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
           onAnimation = true;
           _animationController.forward().then((value) {

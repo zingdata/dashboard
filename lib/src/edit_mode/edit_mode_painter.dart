@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 class _EditModeBackgroundPainter extends CustomPainter {
   _EditModeBackgroundPainter(
@@ -32,10 +32,9 @@ class _EditModeBackgroundPainter extends CustomPainter {
     var horizontalLinePaint = Paint()
       ..style = PaintingStyle.stroke
       ..color = style.lineColor
+      ..strokeCap = StrokeCap.round
       ..strokeWidth = style.lineWidth;
-    var sY = -0.0 -
-        (offset.clamp(0, 100)) -
-        (style.dualLineHorizontal ? mainAxisSpace / 2 : 0);
+    var sY = -0.0 - (offset.clamp(0, 100)) - (style.dualLineHorizontal ? mainAxisSpace / 2 : 0);
     var eY = constraints.maxHeight + 100;
     for (var i in List.generate(slotCount + 1, (index) => index)) {
       if (i == 0) {
@@ -61,6 +60,7 @@ class _EditModeBackgroundPainter extends CustomPainter {
     var horizontalLinePaint = Paint()
       ..style = PaintingStyle.stroke
       ..color = style.lineColor
+      ..strokeCap = StrokeCap.round
       ..strokeWidth = style.lineWidth;
     var max = constraints.maxHeight;
     var i = 0;
@@ -74,13 +74,10 @@ class _EditModeBackgroundPainter extends CustomPainter {
       if (style.dualLineHorizontal) {
         var t = y - mainAxisSpace / 2;
         var b = y + mainAxisSpace / 2;
-        canvas.drawLine(
-            Offset(0, t), Offset(constraints.maxWidth, t), horizontalLinePaint);
-        canvas.drawLine(
-            Offset(0, b), Offset(constraints.maxWidth, b), horizontalLinePaint);
+        canvas.drawLine(Offset(0, t), Offset(constraints.maxWidth, t), horizontalLinePaint);
+        canvas.drawLine(Offset(0, b), Offset(constraints.maxWidth, b), horizontalLinePaint);
       } else {
-        canvas.drawLine(
-            Offset(0, y), Offset(constraints.maxWidth, y), horizontalLinePaint);
+        canvas.drawLine(Offset(0, y), Offset(constraints.maxWidth, y), horizontalLinePaint);
       }
 
       i++;
@@ -92,7 +89,8 @@ class _EditModeBackgroundPainter extends CustomPainter {
     drawVerticalLines(canvas);
     drawHorizontals(canvas);
     if (fillPosition != null) {
-      canvas.drawRect(fillPosition!, Paint()..color = style.fillColor);
+      canvas.drawRRect(RRect.fromRectAndRadius(fillPosition!, const Radius.circular(8)),
+          Paint()..color = style.fillColor);
     }
   }
 

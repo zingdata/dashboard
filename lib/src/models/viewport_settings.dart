@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 @immutable
 class _ViewportDelegate {
@@ -27,6 +27,5 @@ class _ViewportDelegate {
   final double mainAxisSpace, crossAxisSpace;
 
   @override
-  int get hashCode =>
-      Object.hash(mainAxisSpace, crossAxisSpace, crossAxisSpace, padding);
+  int get hashCode => Object.hash(mainAxisSpace, crossAxisSpace, crossAxisSpace, padding);
 }

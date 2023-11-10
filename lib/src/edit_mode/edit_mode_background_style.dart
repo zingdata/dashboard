@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 /// In edit mode, dashboard background are painted with lines and a rect if
 /// any items is editing.
@@ -47,8 +47,8 @@ class EditModeBackgroundStyle {
   final Color lineColor;
 
   @override
-  int get hashCode => Object.hash(
-      fillColor, dualLineVertical, dualLineHorizontal, lineWidth, lineColor);
+  int get hashCode =>
+      Object.hash(fillColor, dualLineVertical, dualLineHorizontal, lineWidth, lineColor);
 }
 
 // class EditModeForegroundStyle {

@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 /// Dashboard item layout changes stored/handled with the delegate. Keeps the
 /// layout in memory, fetches the layout when necessary. It can store different
@@ -55,16 +55,12 @@ abstract class DashboardItemStorageDelegate<T extends DashboardItem> {
           var items = Future<List<T>>.microtask(() async {
             return await itemsFtrOr;
           }).then((value) {
-            _items[sc] = value
-                .asMap()
-                .map((key, value) => MapEntry(value.identifier, value));
+            _items[sc] = value.asMap().map((key, value) => MapEntry(value.identifier, value));
             return value;
           });
           return items;
         } else {
-          _items[sc] = itemsFtrOr
-              .asMap()
-              .map((key, value) => MapEntry(value.identifier, value));
+          _items[sc] = itemsFtrOr.asMap().map((key, value) => MapEntry(value.identifier, value));
           return itemsFtrOr;
         }
       }

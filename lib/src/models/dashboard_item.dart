@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 /// A dashboard consists of [DashboardItem]s.
 /// [DashboardItem] holds item identifier([identifier]) and [layoutData].
@@ -36,8 +36,7 @@ class DashboardItem {
 
   /// Converts json encodable Map to items to create from storage.
   factory DashboardItem.fromMap(Map<String, dynamic> map) {
-    return DashboardItem.withLayout(
-        map["item_id"], ItemLayout.fromMap(map["layout"]));
+    return DashboardItem.withLayout(map["item_id"], ItemLayout.fromMap(map["layout"]));
   }
 
   /// It contains the location and dimensions of the Item on the Dashboard.

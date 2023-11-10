@@ -38,7 +38,7 @@ class _DashboardItemWidget extends StatefulWidget {
   final String id;
   final _DashboardLayoutController layoutController;
   final EditModeSettings editModeSettings;
-  final _ItemCurrentPosition itemGlobalPosition;
+  final ItemCurrentPosition itemGlobalPosition;
   final ViewportOffset offset;
   final ItemStyle style;
 
@@ -46,8 +46,7 @@ class _DashboardItemWidget extends StatefulWidget {
   State<_DashboardItemWidget> createState() => _DashboardItemWidgetState();
 }
 
-class _DashboardItemWidgetState extends State<_DashboardItemWidget>
-    with TickerProviderStateMixin {
+class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerProviderStateMixin {
   late MouseCursor cursor;
 
   // late double leftPad, rightPad, topPad, bottomPad;
@@ -60,7 +59,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
     super.dispose();
   }
 
-  _listen() {
+  void _listen() {
     setState(() {});
   }
 
@@ -69,16 +68,15 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
   @override
   void initState() {
     cursor = MouseCursor.defer;
-    _animationController = AnimationController(
-        vsync: this, duration: widget.editModeSettings.duration);
-    _multiplierAnimationController = AnimationController(
-        vsync: this, value: 0, duration: widget.editModeSettings.duration);
+    _animationController =
+        AnimationController(vsync: this, duration: widget.editModeSettings.duration);
+    _multiplierAnimationController =
+        AnimationController(vsync: this, value: 0, duration: widget.editModeSettings.duration);
     widget.itemCurrentLayout.addListener(_listen);
     super.initState();
   }
 
-  _ItemCurrentPosition? get _resizePosition =>
-      widget.itemCurrentLayout._resizePosition?.value;
+  ItemCurrentPosition? get _resizePosition => widget.itemCurrentLayout._resizePosition?.value;
 
   bool onRightSide(double dX) =>
       dX >
@@ -86,12 +84,10 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
           widget.editModeSettings.resizeCursorSide;
 
   bool onLeftSide(double dX) =>
-      (dX + (_resizePosition?.x ?? 0)) <
-      widget.editModeSettings.resizeCursorSide;
+      (dX + (_resizePosition?.x ?? 0)) < widget.editModeSettings.resizeCursorSide;
 
   bool onTopSide(double dY) =>
-      (dY + (_resizePosition?.y ?? 0)) <
-      widget.editModeSettings.resizeCursorSide;
+      (dY + (_resizePosition?.y ?? 0)) < widget.editModeSettings.resizeCursorSide;
 
   bool onBottomSide(double dY) =>
       dY >
@@ -152,24 +148,22 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
 
   double get slotEdge => widget.layoutController.slotEdge;
 
-  _ItemCurrentPosition? ex;
+  ItemCurrentPosition? ex;
 
   late AnimationController _animationController;
-  Animation<_ItemCurrentPosition>? _animation;
+  Animation<ItemCurrentPosition>? _animation;
 
   Offset? _lastTransform;
-  _ItemCurrentPosition? _lastPosition;
+  ItemCurrentPosition? _lastPosition;
 
-  Future<void> _setLast(
-      Offset? lastOffset, _ItemCurrentPosition? lastPosition) async {
+  Future<void> _setLast(Offset? lastOffset, ItemCurrentPosition? lastPosition) async {
     _lastTransform = lastOffset;
     _lastPosition = lastPosition;
     _multiplierAnimationController.reset();
     _multiplierAnimationController.value = 1;
     await _multiplierAnimationController
         .animateTo(0,
-            duration: widget.editModeSettings.duration,
-            curve: widget.editModeSettings.curve)
+            duration: widget.editModeSettings.duration, curve: widget.editModeSettings.curve)
         .then((value) {
       setState(() {
         _lastTransform = null;
@@ -200,19 +194,21 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
       if (widget.layoutController.absorbPointer) {
         result = AbsorbPointer(child: result);
       }
-      result = MouseRegion(
-        cursor: cursor,
-        onHover: _hover,
-        onExit: _exit,
-        child: result,
-      );
+
+      if (kIsWeb) {
+        result = MouseRegion(
+          cursor: cursor,
+          onHover: _hover,
+          onExit: _exit,
+          child: result,
+        );
+      }
     }
 
-    var currentEdit = widget.layoutController.editSession?.editing.id ==
-        widget.itemCurrentLayout.id;
+    var currentEdit =
+        widget.layoutController.editSession?.editing.id == widget.itemCurrentLayout.id;
 
-    var transform =
-        currentEdit ? widget.layoutController.editSession!.transform : false;
+    var transform = currentEdit ? widget.layoutController.editSession!.transform : false;
 
     var onlyDimensions = currentEdit && transform;
 
@@ -226,31 +222,29 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
       if (onAnimation) {
         ex = _animation!.value;
 
-        var difMicro = (widget.editModeSettings.duration -
-                (DateTime.now().difference(animationStart!).abs()))
-            .inMicroseconds;
+        var difMicro =
+            (widget.editModeSettings.duration - (DateTime.now().difference(animationStart!).abs()))
+                .inMicroseconds;
         _animationController.duration = Duration(
-            microseconds: difMicro.clamp(
-                0, widget.editModeSettings.duration.inMicroseconds));
+            microseconds: difMicro.clamp(0, widget.editModeSettings.duration.inMicroseconds));
       } else {
         animationStart = DateTime.now();
         onAnimation = true;
       }
       _animationController.reset();
 
-      _animation = CurvedAnimation(
-              parent: _animationController,
-              curve: widget.editModeSettings.curve)
-          .drive(_ItemCurrentPositionTween(
-              begin: onlyDimensions
-                  ? _ItemCurrentPosition(
-                      height: ex!.height,
-                      width: ex!.width,
-                      y: widget.itemGlobalPosition.y,
-                      x: widget.itemGlobalPosition.x)
-                  : ex!,
-              end: widget.itemGlobalPosition,
-              onlyDimensions: onlyDimensions));
+      _animation =
+          CurvedAnimation(parent: _animationController, curve: widget.editModeSettings.curve).drive(
+              _ItemCurrentPositionTween(
+                  begin: onlyDimensions
+                      ? ItemCurrentPosition(
+                          height: ex!.height,
+                          width: ex!.width,
+                          y: widget.itemGlobalPosition.y,
+                          x: widget.itemGlobalPosition.x)
+                      : ex!,
+                  end: widget.itemGlobalPosition,
+                  onlyDimensions: onlyDimensions));
 
       _animationController.forward().then((value) {
         onAnimation = false;
@@ -278,8 +272,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget>
       animation: Listenable.merge([
         if (widget.itemCurrentLayout._resizePosition != null)
           widget.itemCurrentLayout._resizePosition,
-        if (widget.itemCurrentLayout._transform != null)
-          widget.itemCurrentLayout._transform,
+        if (widget.itemCurrentLayout._transform != null) widget.itemCurrentLayout._transform,
         if (_animation != null) _animation,
         if (onEditMode) _multiplierAnimationController,
       ]),

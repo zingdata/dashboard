@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 class ItemLayout {
   ItemLayout(
@@ -73,9 +73,9 @@ class ItemLayout {
   final int width, height;
 
   ///
-  final int minWidth, minHeight;
+  int minWidth, minHeight;
 
-  final int? maxWidth, maxHeight;
+  int? maxWidth, maxHeight;
 
   ItemLayout copyWithDimension({int? width, int? height}) {
     return ItemLayout._(
@@ -87,6 +87,19 @@ class ItemLayout {
         maxHeight: maxHeight,
         maxWidth: maxWidth,
         minWidth: minWidth,
+        haveLocation: _haveLocation);
+  }
+
+  ItemLayout copyWithMin({int? minHeight, int? minWidth}) {
+    return ItemLayout._(
+        startX: startX,
+        startY: startY,
+        width: width,
+        height: height,
+        minHeight: minHeight ?? this.minHeight,
+        maxHeight: maxHeight,
+        maxWidth: maxWidth,
+        minWidth: minWidth ?? this.minWidth,
         haveLocation: _haveLocation);
   }
 

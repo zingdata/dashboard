@@ -1,18 +1,19 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
-  const _DashboardStack(
-      {Key? key,
-      required this.editModeSettings,
-      required this.offset,
-      required this.dashboardController,
-      required this.itemBuilder,
-      required this.cacheExtend,
-      required this.maxScrollOffset,
-      required this.onScrollStateChange,
-      required this.shouldCalculateNewDimensions,
-      required this.itemStyle})
-      : super(key: key);
+  const _DashboardStack({
+    super.key,
+    required this.editModeSettings,
+    required this.offset,
+    required this.dashboardController,
+    required this.itemBuilder,
+    required this.cacheExtend,
+    required this.maxScrollOffset,
+    required this.onScrollStateChange,
+    required this.shouldCalculateNewDimensions,
+    required this.itemStyle,
+    this.itemGlobalPosition,
+  });
 
   final ViewportOffset offset;
   final _DashboardLayoutController<T> dashboardController;
@@ -20,6 +21,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
   final EditModeSettings editModeSettings;
   final double maxScrollOffset;
   final void Function(bool scrollable) onScrollStateChange;
+  final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
 
   ///
   final DashboardItemBuilder<T> itemBuilder;
@@ -32,13 +34,11 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
   State<_DashboardStack<T>> createState() => _DashboardStackState<T>();
 }
 
-class _DashboardStackState<T extends DashboardItem>
-    extends State<_DashboardStack<T>> {
+class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStack<T>> {
   ///
   ViewportOffset get viewportOffset => widget.offset;
 
-  _ViewportDelegate get viewportDelegate =>
-      widget.dashboardController._viewportDelegate;
+  _ViewportDelegate get viewportDelegate => widget.dashboardController._viewportDelegate;
 
   ///
   double get pixels => viewportOffset.pixels;
@@ -56,7 +56,7 @@ class _DashboardStackState<T extends DashboardItem>
   }
 
   ///
-  _listenOffset(ViewportOffset o) {
+  void _listenOffset(ViewportOffset o) {
     setState(() {});
     o.removeListener(_listen);
     o.addListener(_listen);
@@ -86,13 +86,17 @@ class _DashboardStackState<T extends DashboardItem>
   }
 
   Widget buildPositioned(List list) {
+    final itemGlobalPos = (list[0] as _ItemCurrentLayout)._currentPosition(
+      viewportDelegate: viewportDelegate,
+      slotEdge: slotEdge,
+      verticalSlotEdge: verticalSlotEdge,
+    );
+    if (widget.itemGlobalPosition != null) widget.itemGlobalPosition!(list[2], itemGlobalPos);
+
     return _DashboardItemWidget(
       style: widget.itemStyle,
       key: _keys[list[2]]!,
-      itemGlobalPosition: (list[0] as _ItemCurrentLayout)._currentPosition(
-          viewportDelegate: viewportDelegate,
-          slotEdge: slotEdge,
-          verticalSlotEdge: verticalSlotEdge),
+      itemGlobalPosition: itemGlobalPos,
       itemCurrentLayout: list[0],
       id: list[2],
       editModeSettings: widget.editModeSettings,
@@ -113,19 +117,16 @@ class _DashboardStackState<T extends DashboardItem>
 
     _widgetsMap[id] = [
       l,
-      DashboardItemWidget(
-          item: i,
-          child: Material(
-            elevation: widget.itemStyle.elevation ?? 0.0,
-            type: widget.itemStyle.type ?? MaterialType.card,
-            shape: widget.itemStyle.shape,
-            color: widget.itemStyle.color,
-            clipBehavior: widget.itemStyle.clipBehavior ?? Clip.none,
-            animationDuration:
-                widget.itemStyle.animationDuration ?? kThemeChangeDuration,
-            child: widget.itemBuilder(i),
-            //shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          )),
+      Material(
+        elevation: widget.itemStyle.elevation ?? 0.0,
+        type: widget.itemStyle.type ?? MaterialType.card,
+        shape: widget.itemStyle.shape,
+        color: widget.itemStyle.color,
+        clipBehavior: widget.itemStyle.clipBehavior ?? Clip.none,
+        animationDuration: widget.itemStyle.animationDuration ?? kThemeChangeDuration,
+        child: widget.itemBuilder(i),
+        //shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
       id,
     ];
 
@@ -150,8 +151,8 @@ class _DashboardStackState<T extends DashboardItem>
 
     var endPixels = viewportOffset.pixels + height + widget.cacheExtend;
     var endY = (endPixels / verticalSlotEdge).ceil();
-    var endIndex = widget.dashboardController
-        .getIndex([widget.dashboardController.slotCount - 1, endY]);
+    var endIndex =
+        widget.dashboardController.getIndex([widget.dashboardController.slotCount - 1, endY]);
 
     var needs = <String>[];
     var key = startIndex;
@@ -221,35 +222,29 @@ class _DashboardStackState<T extends DashboardItem>
     Widget result = Stack(
       clipBehavior: Clip.hardEdge,
       children: [
-        if (widget.editModeSettings.paintBackgroundLines &&
-            widget.dashboardController.isEditing)
+        if (widget.editModeSettings.paintBackgroundLines && widget.dashboardController.isEditing)
           Positioned(
             top: viewportDelegate.padding.top,
             left: viewportDelegate.padding.left,
-            width: viewportDelegate.constraints.maxWidth -
-                viewportDelegate.padding.vertical,
-            height: viewportDelegate.constraints.maxHeight -
-                viewportDelegate.padding.horizontal,
+            width: viewportDelegate.constraints.maxWidth - viewportDelegate.padding.vertical,
+            height: viewportDelegate.constraints.maxHeight - viewportDelegate.padding.horizontal,
             child: Builder(builder: (context) {
               return _AnimatedBackgroundPainter(
-                  layoutController: widget.dashboardController,
-                  editModeSettings: widget.editModeSettings,
-                  offset: viewportOffset);
+                layoutController: widget.dashboardController,
+                editModeSettings: widget.editModeSettings,
+                offset: viewportOffset,
+              );
             }),
           ),
         ..._widgetsMap.entries
-            .where((element) =>
-                element.value[2] !=
-                widget.dashboardController.editSession?.editing.id)
+            .where(
+                (element) => element.value[2] != widget.dashboardController.editSession?.editing.id)
             .map((e) {
           return buildPositioned(e.value);
-        }).toList(),
+        }),
         ...?(widget.dashboardController.editSession == null
             ? null
-            : [
-                buildPositioned(_widgetsMap[
-                    widget.dashboardController.editSession?.editing.id]!)
-              ])
+            : [buildPositioned(_widgetsMap[widget.dashboardController.editSession?.editing.id]!)])
       ],
     );
 
@@ -332,15 +327,13 @@ class _DashboardStackState<T extends DashboardItem>
   double speed = 0;
 
   void _onMoveStart(Offset local) {
-    var holdGlobal = Offset(local.dx - viewportDelegate.padding.left,
-        local.dy - viewportDelegate.padding.top);
+    var holdGlobal =
+        Offset(local.dx - viewportDelegate.padding.left, local.dy - viewportDelegate.padding.top);
 
     var x = (local.dx - viewportDelegate.padding.left) ~/ slotEdge;
-    var y =
-        (local.dy + pixels - viewportDelegate.padding.top) ~/ verticalSlotEdge;
+    var y = (local.dy + pixels - viewportDelegate.padding.top) ~/ verticalSlotEdge;
 
-    var e = widget.dashboardController
-        ._indexesTree[widget.dashboardController.getIndex([x, y])];
+    var e = widget.dashboardController._indexesTree[widget.dashboardController.getIndex([x, y])];
 
     if (e is String) {
       var directions = <AxisDirection>[];
@@ -349,7 +342,7 @@ class _DashboardStackState<T extends DashboardItem>
           slotEdge: slotEdge,
           viewportDelegate: viewportDelegate,
           verticalSlotEdge: verticalSlotEdge);
-      var itemGlobal = _ItemCurrentPosition(
+      var itemGlobal = ItemCurrentPosition(
           x: current.x - viewportDelegate.padding.left,
           y: current.y - viewportDelegate.padding.top - pixels,
           height: current.height,
@@ -359,23 +352,19 @@ class _DashboardStackState<T extends DashboardItem>
         setState(() {});
         return;
       }
-      if (itemGlobal.x + widget.editModeSettings.resizeCursorSide >
-          holdGlobal.dx) {
+      if (itemGlobal.x + widget.editModeSettings.resizeCursorSide > holdGlobal.dx) {
         directions.add(AxisDirection.left);
       }
 
-      if ((itemGlobal.y) + widget.editModeSettings.resizeCursorSide >
-          holdGlobal.dy) {
+      if ((itemGlobal.y) + widget.editModeSettings.resizeCursorSide > holdGlobal.dy) {
         directions.add(AxisDirection.up);
       }
 
-      if (itemGlobal.endX - widget.editModeSettings.resizeCursorSide <
-          holdGlobal.dx) {
+      if (itemGlobal.endX - widget.editModeSettings.resizeCursorSide < holdGlobal.dx) {
         directions.add(AxisDirection.right);
       }
 
-      if ((itemGlobal.endY) - widget.editModeSettings.resizeCursorSide <
-          holdGlobal.dy) {
+      if ((itemGlobal.endY) - widget.editModeSettings.resizeCursorSide < holdGlobal.dy) {
         directions.add(AxisDirection.down);
       }
       if (directions.isNotEmpty) {
@@ -388,10 +377,7 @@ class _DashboardStackState<T extends DashboardItem>
       widget.dashboardController.startEdit(e, _holdDirections == null);
 
       var l = widget.dashboardController._layouts![e];
-      widget.dashboardController.editSession!.editing._originSize = [
-        l!.width,
-        l.height
-      ];
+      widget.dashboardController.editSession!.editing._originSize = [l!.width, l.height];
       setState(() {});
       widget.onScrollStateChange(false);
     } else {
@@ -412,8 +398,7 @@ class _DashboardStackState<T extends DashboardItem>
   Offset? _moveStartOffset;
   double? _startScrollPixels;
 
-  bool isResizing(AxisDirection direction) =>
-      _holdDirections!.contains(direction);
+  bool isResizing(AxisDirection direction) => _holdDirections!.contains(direction);
 
   void _onMoveUpdate(Offset local) {
     if (_editing != null) {
@@ -433,8 +418,7 @@ class _DashboardStackState<T extends DashboardItem>
 
         if (resizeMoveResult.isChanged) {
           setState(() {
-            _moveStartOffset =
-                _moveStartOffset! + resizeMoveResult.startDifference;
+            _moveStartOffset = _moveStartOffset! + resizeMoveResult.startDifference;
             _widgetsMap.remove(_editing!.id);
             for (var r in differences) {
               _widgetsMap.remove(r);
@@ -445,12 +429,11 @@ class _DashboardStackState<T extends DashboardItem>
           });
         }
       } else {
-        var resizeMoveResult = _editing!._transformUpdate(
-            local - _moveStartOffset!, pixels - _startScrollPixels!);
+        var resizeMoveResult =
+            _editing!._transformUpdate(local - _moveStartOffset!, pixels - _startScrollPixels!);
         if (resizeMoveResult != null && resizeMoveResult.isChanged) {
           setState(() {
-            _moveStartOffset =
-                _moveStartOffset! + resizeMoveResult.startDifference;
+            _moveStartOffset = _moveStartOffset! + resizeMoveResult.startDifference;
             _widgetsMap.remove(_editing!.id);
             if (_editing!._endIndex > (e)) {
               widget.shouldCalculateNewDimensions();
@@ -464,8 +447,7 @@ class _DashboardStackState<T extends DashboardItem>
   void _onMoveEnd() {
     _editing?._key = _keys[_editing!.id]!;
     _editing?._key.currentState
-        ?._setLast(
-            _editing!._transform?.value, _editing!._resizePosition?.value)
+        ?._setLast(_editing!._transform?.value, _editing!._resizePosition?.value)
         .then((value) {
       widget.dashboardController.editSession?.editing._originSize = null;
       _editing?._clearListeners();

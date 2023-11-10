@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 /// A controller for dashboard items.
 ///
@@ -34,8 +34,7 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   ///
   /// If the delegate is waiting for a Future to load the items, this will throw
   /// error at the end of the [timout].
-  DashboardItemController.withDelegate(
-      {Duration? timeout, required this.itemStorageDelegate})
+  DashboardItemController.withDelegate({Duration? timeout, required this.itemStorageDelegate})
       : _timeout = timeout ?? const Duration(seconds: 10);
 
   /// To define [itemStorageDelegate] use [DashboardItemController.withDelegate]
@@ -47,11 +46,11 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// The [isEditing] does not have to be true to add or delete items.
   ///
   /// Use as setter to change [isEditing] value.
-  bool get isEditing => _layoutController!.isEditing;
+  bool get isEditing => _layoutController?.isEditing ?? false;
 
   /// Change editing status.
   set isEditing(bool value) {
-    _layoutController!.isEditing = value;
+    _layoutController?.isEditing = value;
   }
 
   /// Add new item to Dashboard.
@@ -93,8 +92,7 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// the largest form.
   void addAll(List<T> items, {bool mountToTop = true}) {
     if (_isAttached) {
-      _items.addAll(
-          items.asMap().map((key, value) => MapEntry(value.identifier, value)));
+      _items.addAll(items.asMap().map((key, value) => MapEntry(value.identifier, value)));
       _layoutController!.addAll(items);
       itemStorageDelegate?._onItemsAdded(
           items.map((e) => _getItemWithLayout(e.identifier)).toList(),
@@ -102,14 +100,13 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
     } else {
       throw Exception("Not Attached");
     }
-    throw 0;
+    // throw 0;
   }
 
   /// Delete an item from Dashboard.
   void delete(String id) {
     if (_isAttached) {
-      itemStorageDelegate?._onItemsDeleted(
-          [_getItemWithLayout(id)], _layoutController!.slotCount);
+      itemStorageDelegate?._onItemsDeleted([_getItemWithLayout(id)], _layoutController!.slotCount);
       _layoutController!.delete(id);
       _items.remove(id);
     } else {
@@ -118,11 +115,10 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   }
 
   /// Delete multiple items from Dashboard.
-  void deleteAll(List<String> ids) {
+  Future<void> deleteAll(List<String> ids) async {
     if (_isAttached) {
-      itemStorageDelegate?._onItemsDeleted(
-          ids.map((e) => _getItemWithLayout(e)).toList(),
-          _layoutController!.slotCount);
+      await itemStorageDelegate?._onItemsDeleted(
+          ids.map((e) => _getItemWithLayout(e)).toList(), _layoutController!.slotCount);
       _layoutController!.deleteAll(ids);
       _items.removeWhere((k, v) => ids.contains(k));
     } else {
@@ -131,7 +127,7 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   }
 
   /// Clear all items from Dashboard.
-  void clear() {
+  Future<void> clear() {
     return deleteAll(items);
   }
 
@@ -141,14 +137,14 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   }
 
   ///
-  late Map<String, T> _items;
+  Map<String, T> _items = {};
 
   /// Get all items.
   ///
   /// The returned list is unmodifiable. A change negative affects
   /// state management and causes conflicts.
-  List<String> get items =>
-      List.unmodifiable(_items.values.map((e) => e.identifier));
+  List<T> get dashboardItems => List.unmodifiable(_items.values.map((e) => e));
+  List<String> get items => List.unmodifiable(_items.values.map((e) => e.identifier));
 
   Duration? _timeout;
 
@@ -163,9 +159,7 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
       var completer = Completer();
 
       ftr.then((value) {
-        _items = value
-            .asMap()
-            .map((key, value) => MapEntry(value.identifier, value));
+        _items = value.asMap().map((key, value) => MapEntry(value.identifier, value));
 
         completer.complete();
         _asyncSnap!.value = AsyncSnapshot.withData(ConnectionState.done, value);
@@ -175,18 +169,16 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
             ConnectionState.none, TimeoutException(null), StackTrace.current);
       }).onError((error, stackTrace) {
         completer.complete();
-        _asyncSnap!.value = AsyncSnapshot.withError(
-            ConnectionState.none, error ?? Exception(), stackTrace);
+        _asyncSnap!.value =
+            AsyncSnapshot.withError(ConnectionState.none, error ?? Exception(), stackTrace);
       });
 
       return Future.sync(() => completer.future);
     } else {
-      _items =
-          ftr.asMap().map((key, value) => MapEntry(value.identifier, value));
+      _items = ftr.asMap().map((key, value) => MapEntry(value.identifier, value));
 
       if (_asyncSnap == null) {
-        _asyncSnap =
-            ValueNotifier(AsyncSnapshot.withData(ConnectionState.done, ftr));
+        _asyncSnap = ValueNotifier(AsyncSnapshot.withData(ConnectionState.done, ftr));
       } else {
         _asyncSnap!.value = AsyncSnapshot.withData(ConnectionState.done, ftr);
       }
@@ -268,8 +260,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   _EditSession? editSession;
 
   void startEdit(String id, bool transform) {
-    editSession = _EditSession(
-        layoutController: this, editing: _layouts![id]!, transform: transform);
+    editSession =
+        _EditSession(layoutController: this, editing: _layouts![id]!, transform: transform);
   }
 
   void saveEditSession() {
@@ -313,15 +305,19 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   void deleteAll(List<String> ids) {
     for (var id in ids) {
       var l = _layouts![id];
-      var indexes = getItemIndexes(l!.origin);
-      _startsTree.remove(indexes.first);
-      _endsTree.remove(indexes.last);
+      if (l != null) {
+        var indexes = getItemIndexes(l.origin);
+        _startsTree.remove(indexes.first);
+        _endsTree.remove(indexes.last);
 
-      for (var i in indexes) {
-        _indexesTree.remove(i);
+        //   for (var i in indexes) {
+        //     _indexesTree.remove(i);
+        //   }
+        /// added by raza
+        _indexesTree.clear();
+
+        _layouts!.remove(id);
       }
-
-      _layouts!.remove(id);
     }
     notifyListeners();
   }
@@ -387,7 +383,6 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   List<int?> getOverflowsAlt(ItemLayout itemLayout) {
     var possibilities = <_OverflowPossibility>[];
-
     var y = itemLayout.startY;
     var eY = itemLayout.startY + itemLayout.height;
     var eX = min(itemLayout.startX + itemLayout.width, slotCount + 1);
@@ -400,8 +395,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       xLoop:
       while (x < eX) {
         if (x > minX) {
-          possibilities.add(_OverflowPossibility(
-              x, y + 1, x - itemLayout.startX, y - itemLayout.startY + 1));
+          possibilities.add(
+              _OverflowPossibility(x, y + 1, x - itemLayout.startX, y - itemLayout.startY + 1));
           break xLoop;
         }
         if (_indexesTree.containsKey(getIndex([x, y]))) {
@@ -416,8 +411,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
               }
 
               possibilities.removeWhere((element) {
-                return (element.w < itemLayout.minWidth ||
-                    element.h < itemLayout.minHeight);
+                return (element.w < itemLayout.minWidth || element.h < itemLayout.minHeight);
               });
 
               if (possibilities.isEmpty) {
@@ -434,14 +428,11 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
           if (possibilities.isEmpty) {
             possibilities.add(_OverflowPossibility(
-                itemLayout.startX + itemLayout.width,
-                y,
-                itemLayout.width,
-                y - itemLayout.startY));
+                itemLayout.startX + itemLayout.width, y, itemLayout.width, y - itemLayout.startY));
           }
 
-          possibilities.add(_OverflowPossibility(
-              x, y + 1, x - itemLayout.startX, y - itemLayout.startY + 1));
+          possibilities.add(
+              _OverflowPossibility(x, y + 1, x - itemLayout.startX, y - itemLayout.startY + 1));
 
           y++;
           continue yLoop;
@@ -458,8 +449,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
     }
 
     possibilities.removeWhere((element) {
-      return (element.w < itemLayout.minWidth ||
-          element.h < itemLayout.minHeight);
+      return (element.w < itemLayout.minWidth || element.h < itemLayout.minHeight);
     });
 
     if (possibilities.isEmpty) {
@@ -635,8 +625,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
             var eY = overflows[1] ?? (n.startY + n.height);
 
             if (eX - n.startX >= n.minWidth && eY - n.startY >= n.minHeight) {
-              return n.copyWithDimension(
-                  width: eX - n.startX, height: eY - n.startY);
+              return n.copyWithDimension(width: eX - n.startX, height: eY - n.startY);
             } else {
               return null;
             }
@@ -697,8 +686,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       var not = <String>[];
 
       layouts:
-      for (var i in _layouts!.entries
-          .where((element) => element.value._haveLocation)) {
+      for (var i in _layouts!.entries.where((element) => element.value._haveLocation)) {
         if (_axis == Axis.vertical && i.value.width > slotCount) {
           // Check fit, if necessary and possible, edit
           if (i.value.minWidth > slotCount) {
@@ -711,8 +699,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
         }
 
         // can mount given start index
-        var mount = tryMount(
-            getIndex([i.value.startX, i.value.startY]), i.value.origin);
+        var mount = tryMount(getIndex([i.value.startX, i.value.startY]), i.value.origin);
 
         if (mount == null) {
           not.add(i.key);
@@ -723,8 +710,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       }
 
       layouts:
-      for (var i in _layouts!.entries
-          .where((element) => !element.value._haveLocation)) {
+      for (var i in _layouts!.entries.where((element) => !element.value._haveLocation)) {
         if (_axis == Axis.vertical && i.value.width > slotCount) {
           // Check fit, if necessary and possible, edit
           if (i.value.minWidth > slotCount) {
@@ -737,8 +723,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
         }
 
         // can mount given start index
-        var mount = tryMount(
-            getIndex([i.value.startX, i.value.startY]), i.value.origin);
+        var mount = tryMount(getIndex([i.value.startX, i.value.startY]), i.value.origin);
 
         if (mount == null) {
           not.add(i.key);
@@ -763,8 +748,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
       if (changes.isNotEmpty) {
         itemController.itemStorageDelegate?._onItemsUpdated(
-            changes.map((e) => itemController._getItemWithLayout(e)).toList(),
-            slotCount);
+            changes.map((e) => itemController._getItemWithLayout(e)).toList(), slotCount);
       }
     } on Exception {
       rethrow;
@@ -781,8 +765,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   ///
   BoxConstraints getConstrains(ItemLayout layout) {
     return BoxConstraints(
-        maxHeight: layout.height * verticalSlotEdge,
-        maxWidth: layout.width * slotEdge);
+        maxHeight: layout.height * verticalSlotEdge, maxWidth: layout.width * slotEdge);
   }
 
   ///
@@ -816,9 +799,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void _setSizes(BoxConstraints constrains, double vertical) {
     verticalSlotEdge = vertical;
-    slotEdge =
-        (_axis == Axis.vertical ? constrains.maxWidth : constrains.maxHeight) /
-            slotCount;
+    slotEdge = (_axis == Axis.vertical ? constrains.maxWidth : constrains.maxHeight) / slotCount;
   }
 
   late bool animateEverytime;
@@ -841,8 +822,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
     _axis = axis;
     _isAttached = true;
 
-    _layouts = itemController._items.map((key, value) =>
-        MapEntry(value.identifier, _ItemCurrentLayout(value.layoutData)));
+    _layouts = itemController._items
+        .map((key, value) => MapEntry(value.identifier, _ItemCurrentLayout(value.layoutData)));
     mountItems();
     _rebuild = true;
   }
@@ -853,7 +834,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   bool _isAttached = false;
 }
 
-class _OverflowPossibility extends Comparable<_OverflowPossibility> {
+class _OverflowPossibility implements Comparable<_OverflowPossibility> {
   _OverflowPossibility(this.x, this.y, this.w, this.h) : sq = w * h;
 
   int x, y, w, h, sq;
@@ -906,16 +887,14 @@ class _EditSession {
 
   final Map<AxisDirection, Map<String, List<_Change>>> _indirectChanges = {};
 
-  void _addResize(
-      _Resize resize, void Function(String id, _Change) onBackChange) {
+  void _addResize(_Resize resize, void Function(String id, _Change) onBackChange) {
     // _resizes[resize.resize.direction] ??= [];
     // _resizes[resize.resize.direction]!.add(resize.resize);
     if (resize.resize.increment && resize.indirectResizes != null) {
       for (var indirect in resize.indirectResizes!.entries) {
         _indirectChanges[indirect.value.direction] ??= {};
         _indirectChanges[indirect.value.direction]![indirect.key] ??= [];
-        _indirectChanges[indirect.value.direction]![indirect.key]!
-            .add(indirect.value);
+        _indirectChanges[indirect.value.direction]![indirect.key]!.add(indirect.value);
       }
     }
 
@@ -939,8 +918,7 @@ class _EditSession {
       } else {
         for (var resize in reverseIndirectResizes.entries) {
           if (resize.value.isNotEmpty) {
-            onBackChange(
-                resize.key, resize.value.removeAt(resize.value.length - 1));
+            onBackChange(resize.key, resize.value.removeAt(resize.value.length - 1));
           }
         }
       }

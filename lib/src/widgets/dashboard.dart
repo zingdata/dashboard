@@ -1,4 +1,4 @@
-part of dashboard;
+part of '../dashboard_base.dart';
 
 ///
 typedef DashboardItemBuilder<T extends DashboardItem> = Widget Function(T item);
@@ -25,7 +25,7 @@ typedef DashboardItemBuilder<T extends DashboardItem> = Widget Function(T item);
 class Dashboard<T extends DashboardItem> extends StatefulWidget {
   /// A list of widget arranged with hand or initially.
   Dashboard(
-      {Key? key,
+      {super.key,
       required this.itemBuilder,
       required this.dashboardItemController,
       this.slotCount = 8,
@@ -39,6 +39,7 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
       this.padding = const EdgeInsets.all(0),
       this.shrinkToPlace = true,
       this.slideToTop = true,
+      this.allowSwapping = true,
       this.slotAspectRatio,
       this.slotHeight,
       EditModeSettings? editModeSettings,
@@ -48,11 +49,11 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
       this.emptyPlaceholder,
       this.absorbPointer = true,
       this.animateEverytime = true,
+      this.itemGlobalPosition,
       this.itemStyle = const ItemStyle()})
       : assert((slotHeight == null && slotAspectRatio == null) ||
             !(slotHeight != null && slotAspectRatio != null)),
-        editModeSettings = editModeSettings ?? EditModeSettings(),
-        super(key: key);
+        editModeSettings = editModeSettings ?? EditModeSettings();
 
   /// [slotAspectRatio] determines slots height. Slot width determined by
   /// viewport width and [slotCount].
@@ -181,6 +182,10 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
   /// to be filled with items that starting from the top.
   final bool slideToTop;
 
+  ///
+  /// If [allowSwapping] is true, when we drag one item over the other, it will be swapped (added by raza)
+  final bool allowSwapping;
+
   /// [padding] resolved with [textDirection].
   final TextDirection textDirection;
 
@@ -189,6 +194,11 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
   ///
   /// Look [Material] documentation for more.
   final ItemStyle itemStyle;
+
+  /// added by raza for scrolling to specific position in dashboard
+  /// we can use global position of item to scroll to that item
+
+  final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
 
   @override
   State<Dashboard<T>> createState() => _DashboardState<T>();
@@ -201,7 +211,10 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
   void initState() {
     _layoutController = _DashboardLayoutController<T>();
     _layoutController.addListener(() {
-      setState(() {});
+      /// added mounted by *raza*
+      if (mounted) {
+        setState(() {});
+      }
     });
 
     widget.dashboardItemController._attach(_layoutController);
@@ -211,9 +224,12 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
       widget.dashboardItemController._loadItems(widget.slotCount);
       widget.dashboardItemController._asyncSnap!.addListener(() {
         if (mounted) {
-          if (!_building) {
-            setState(() {});
-          }
+          /// added mounted by *raza*
+          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+            if (!_building && mounted) {
+              setState(() {});
+            }
+          });
         }
       });
     }
@@ -224,8 +240,7 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
 
   AsyncSnapshot? get _snap => widget.dashboardItemController._asyncSnap?.value;
 
-  bool get _withDelegate =>
-      widget.dashboardItemController.itemStorageDelegate != null;
+  bool get _withDelegate => widget.dashboardItemController.itemStorageDelegate != null;
 
   ///
   late _DashboardLayoutController<T> _layoutController;
@@ -247,7 +262,7 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
   }
 
   ///
-  _setNewOffset(ViewportOffset o, BoxConstraints constraints) {
+  void _setNewOffset(ViewportOffset o, BoxConstraints constraints) {
     /// check slot count
     /// check new constrains equal exists
 
@@ -295,17 +310,14 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
           widget.slotCount /
           widget.slotAspectRatio!;
     } else {
-      h = _layoutController._viewportDelegate.resolvedConstrains.maxWidth /
-          widget.slotCount;
+      h = _layoutController._viewportDelegate.resolvedConstrains.maxWidth / widget.slotCount;
     }
 
-    _layoutController._setSizes(
-        _layoutController._viewportDelegate.resolvedConstrains, h);
+    _layoutController._setSizes(_layoutController._viewportDelegate.resolvedConstrains, h);
 
     _offset = o;
 
-    offset.applyViewportDimension(
-        _layoutController._viewportDelegate.constraints.maxHeight);
+    offset.applyViewportDimension(_layoutController._viewportDelegate.constraints.maxHeight);
 
     var maxIndex = (_layoutController._endsTree.lastKey() ?? 0);
 
@@ -314,20 +326,20 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
     _maxExtend = ((maxCoordinate[1] + 1) * _layoutController.verticalSlotEdge);
 
     _maxExtend -= constraints.maxHeight;
-
-    offset.applyContentDimensions(
-        0, _maxExtend.clamp(0, double.maxFinite) + widget.padding.vertical);
+    try {
+      offset.applyContentDimensions(
+          0, _maxExtend.clamp(0, double.maxFinite) + widget.padding.vertical);
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   ///
   late double _maxExtend;
 
   ///
-  final GlobalKey<_DashboardStackState<T>> _stateKey =
-      GlobalKey<_DashboardStackState<T>>();
+  final GlobalKey<_DashboardStackState<T>> _stateKey = GlobalKey<_DashboardStackState<T>>();
 
-  final GlobalKey<ScrollableState> _scrollableKey =
-      GlobalKey<ScrollableState>();
+  final GlobalKey<ScrollableState> _scrollableKey = GlobalKey<ScrollableState>();
 
   bool scrollable = true;
 
@@ -341,8 +353,7 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
         (!_reloading || differentReload) &&
         _layoutController.slotCount != widget.slotCount &&
         _withDelegate &&
-        widget
-            .dashboardItemController.itemStorageDelegate!.layoutsBySlotCount) {
+        widget.dashboardItemController.itemStorageDelegate!.layoutsBySlotCount) {
       _reloading = true;
       _reloadFor = widget.slotCount;
       widget.dashboardItemController._items.clear();
@@ -385,11 +396,9 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
       if (_withDelegate) {
         if (_snap!.connectionState == ConnectionState.none) {
           _building = false;
-          return widget.errorPlaceholder
-                  ?.call(_snap!.error!, _snap!.stackTrace!) ??
+          return widget.errorPlaceholder?.call(_snap!.error!, _snap!.stackTrace!) ??
               const SizedBox();
-        } else if (_snap!.connectionState == ConnectionState.waiting ||
-            _reloading) {
+        } else if (_snap!.connectionState == ConnectionState.waiting || _reloading) {
           _building = false;
 
           return widget.loadingPlaceholder ??
@@ -399,7 +408,9 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
         }
       }
       if (widget.dashboardItemController._items.isEmpty) {
-        return widget.dashboardItemController.isEditing ? dashboardWidget(constrains) : widget.emptyPlaceholder ?? const SizedBox();
+        return widget.dashboardItemController.isEditing
+            ? dashboardWidget(constrains)
+            : widget.emptyPlaceholder ?? const SizedBox();
       }
 
       return dashboardWidget(constrains);
@@ -408,14 +419,11 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
 
   Widget dashboardWidget(BoxConstraints constrains) {
     return Scrollable(
-        physics: scrollable
-            ? widget.physics
-            : const NeverScrollableScrollPhysics(),
+        physics: scrollable ? widget.physics : const NeverScrollableScrollPhysics(),
         key: _scrollableKey,
         controller: widget.scrollController,
         semanticChildCount: widget.dashboardItemController._items.length,
-        dragStartBehavior:
-        widget.dragStartBehavior ?? DragStartBehavior.start,
+        dragStartBehavior: widget.dragStartBehavior ?? DragStartBehavior.start,
         scrollBehavior: widget.scrollBehavior,
         viewportBuilder: (c, o) {
           if (!_reloading) _setNewOffset(o, constrains);
@@ -424,38 +432,40 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
           });
           _building = false;
           return _DashboardStack<T>(
-              itemStyle: widget.itemStyle,
-              shouldCalculateNewDimensions: () {
-                _setNewOffset(o, constrains);
-              },
-              onScrollStateChange: (st) {
-                setState(() {
-                  scrollable = st;
-                });
-              },
-              maxScrollOffset: _maxExtend,
-              editModeSettings: widget.editModeSettings,
-              cacheExtend: widget.cacheExtend,
-              key: _stateKey,
-              itemBuilder: widget.itemBuilder,
-              dashboardController: _layoutController,
-              offset: offset);
+            itemStyle: widget.itemStyle,
+            shouldCalculateNewDimensions: () {
+              _setNewOffset(o, constrains);
+            },
+            onScrollStateChange: (st) {
+              setState(() {
+                scrollable = st;
+              });
+            },
+            maxScrollOffset: _maxExtend,
+            editModeSettings: widget.editModeSettings,
+            cacheExtend: widget.cacheExtend,
+            key: _stateKey,
+            itemBuilder: widget.itemBuilder,
+            dashboardController: _layoutController,
+            offset: offset,
+            itemGlobalPosition: widget.itemGlobalPosition,
+          );
         });
   }
 }
 
-class _ItemCurrentPositionTween extends Tween<_ItemCurrentPosition> {
+class _ItemCurrentPositionTween extends Tween<ItemCurrentPosition> {
   _ItemCurrentPositionTween(
-      {required _ItemCurrentPosition begin,
-      required _ItemCurrentPosition end,
+      {required ItemCurrentPosition begin,
+      required ItemCurrentPosition end,
       required this.onlyDimensions})
       : super(begin: begin, end: end);
 
   bool onlyDimensions;
 
   @override
-  _ItemCurrentPosition lerp(double t) {
-    return _ItemCurrentPosition(
+  ItemCurrentPosition lerp(double t) {
+    return ItemCurrentPosition(
         width: begin!.width * (1.0 - t) + end!.width * t,
         height: begin!.height * (1.0 - t) + end!.height * t,
         x: onlyDimensions ? end!.x : begin!.x * (1.0 - t) + end!.x * t,
