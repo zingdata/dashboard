@@ -66,10 +66,14 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// [Dashboard.shrinkToPlace] is true, it is tried to be placed by shrinking.
   /// In this case, if there is more than one possibility, it is placed in
   /// the largest form.
-  void add(T item, {bool mountToTop = true}) {
+  void add(T item,
+      {bool mountToTop = true,
+      Duration duration = const Duration(milliseconds: 200),
+      Curve curve = Curves.easeInOut}) {
     if (_isAttached) {
       _items[item.identifier] = item;
-      _layoutController!.add(item, mountToTop);
+      _layoutController!
+          .add(item, mountToTop: mountToTop, duration: duration, curve: curve);
       itemStorageDelegate?._onItemsAdded(
           [_getItemWithLayout(item.identifier)], _layoutController!.slotCount);
     } else {
@@ -195,14 +199,6 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   void _attach(_DashboardLayoutController layoutController) {
     _layoutController = layoutController;
   }
-
-// bool trySlideToTop(String id) {
-//   return _layoutController!.mountToTop(id);
-// }
-//
-// void slideToTopAll() {
-//   return _layoutController!._slideToTopAll();
-// }
 }
 
 ///
@@ -228,6 +224,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   ///
   late bool slideToTop;
 
+  late bool scrollToAdded;
+
   bool _isEditing = false;
 
   bool get isEditing {
@@ -242,9 +240,6 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   }
 
   late bool absorbPointer;
-
-  // BoxConstraints? _constrains;
-  // BoxConstraints get constrains => _constrains!;
 
   ///
   late double slotEdge, verticalSlotEdge;
@@ -336,7 +331,33 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
     notifyListeners();
   }
 
-  void add(DashboardItem item, [bool mountToTop = true]) {
+  void _scrollToY(int y, Duration duration, Curve curve) {
+    final lastY = _layouts![_endsTree.lastKey()];
+
+    if (lastY != null) {
+      final lastH = ((lastY.height + lastY.startY) * verticalSlotEdge) -
+          _viewportDelegate.constraints.maxHeight;
+      if (y > lastH) {
+        y = lastH.toInt();
+      }
+    }
+
+    if (scrollToAdded) {
+      if (duration != Duration.zero) {
+        _viewportOffset.animateTo(y * slotEdge,
+            duration: duration, curve: curve);
+      } else {
+        _viewportOffset.jumpTo(y * slotEdge);
+      }
+    }
+  }
+
+  void add(
+    DashboardItem item, {
+    bool mountToTop = true,
+    required Duration duration,
+    required Curve curve,
+  }) {
     _layouts![item.identifier] = _ItemCurrentLayout(item.layoutData);
     this.mountToTop(
         item.identifier,
@@ -345,6 +366,9 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
             : getIndex(
                 [_adjustToPosition(item.layoutData), item.layoutData.startY]));
     notifyListeners();
+
+    // TODO: scroll to item
+    _scrollToY(_layouts![item.identifier]!.startY, duration, curve);
   }
 
   int _adjustToPosition(ItemLayout layout) {
@@ -439,8 +463,6 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
         }
         x++;
       }
-      // possibilities.add(OverflowPossibility(
-      //     x + 1, y + 1, x - itemLayout.startX, y - itemLayout.startY));
       y++;
     }
 
@@ -464,82 +486,6 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
     return [p.x, p.y];
   }
-
-  ///
-  // List<int?> getOverflows(ItemLayout itemLayout) {
-  //   var possibilities = <OverflowPossibility>[];
-  //
-  //   var y = itemLayout.startY;
-  //   var eX = itemLayout.startX + itemLayout.width;
-  //   var eY = itemLayout.startY + itemLayout.height;
-  //
-  //   int minX = max(itemLayout.startX + itemLayout.width, slotCount + 1);
-  //
-  //   while (y < eY) {
-  //     var x = itemLayout.startX;
-  //     xLoop:
-  //     while (x < eX) {
-  //       if (x > minX) {
-  //         break xLoop;
-  //       }
-  //       if (x >= slotCount || _indexesTree.containsKey(getIndex([x, y]))) {
-  //         if (x == itemLayout.startX) {
-  //           if (y == itemLayout.startY) {
-  //
-  //             return [itemLayout.startX, itemLayout.startY];
-  //           }
-  //
-  //           possibilities.sort((a, b) => b.compareTo(a));
-  //
-  //           if (possibilities.isEmpty) {
-  //             return [null, y];
-  //           }
-  //           var p = possibilities.first;
-  //
-  //           return [p.x, p.y];
-  //         }
-  //
-  //         if (x < minX) {
-  //           minX = x;
-  //         }
-  //
-  //         var nw = x - itemLayout.startX;
-  //         var nh = y - itemLayout.startY;
-  //         if (itemLayout.maxWidth != null && nw > itemLayout.maxWidth!) {
-  //           possibilities.add(OverflowPossibility(
-  //               x, y, x - itemLayout.startX, y - itemLayout.startY));
-  //           break xLoop;
-  //         }
-  //
-  //         if (itemLayout.maxHeight != null && nh > itemLayout.maxHeight!) {
-  //           possibilities.add(OverflowPossibility(
-  //               x, y, x - itemLayout.startX, y - itemLayout.startY));
-  //           break xLoop;
-  //         }
-  //
-  //         if ((nw >= itemLayout.minWidth && nh >= itemLayout.minHeight)) {
-  //           possibilities.add(OverflowPossibility(
-  //               x, y, x - itemLayout.startX, y - itemLayout.startY));
-  //           break xLoop;
-  //         }
-  //       }
-  //       x++;
-  //     }
-  //     y++;
-  //   }
-  //   possibilities.sort((a, b) => b.compareTo(a));
-  //
-  //   if (possibilities.isEmpty) {
-  //     return [null, null];
-  //   }
-  //
-  //   var p = possibilities.first;
-  //
-  //
-  //   return [p.x, p.y];
-  //
-  //   /*return [blockX, blockY];*/
-  // }
 
   void _removeFromIndexes(ItemLayout itemLayout, String id) {
     var i = getItemIndexes(itemLayout);
@@ -573,7 +519,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void _indexItem(ItemLayout itemLayout, String id) {
     var i = getItemIndexes(itemLayout);
-    if (i.isEmpty) throw Exception("BURADA SIKINTI VAR: $id : $itemLayout");
+    if (i.isEmpty) throw Exception("I don't understand: $id : $itemLayout");
     _startsTree[i.first] = id;
     _endsTree[i.last] = id;
     for (var index in i) {
@@ -804,26 +750,32 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   late bool animateEverytime;
 
+  late ViewportOffset _viewportOffset;
+
   ///
-  void attach(
-      {required Axis axis,
-      required DashboardItemController<T> itemController,
-      required int slotCount,
-      required bool slideToTop,
-      required bool shrinkToPlace,
-      required bool animateEverytime,
-      required bool? shrinkOnMove}) {
+  void attach({
+    required Axis axis,
+    required DashboardItemController<T> itemController,
+    required int slotCount,
+    required bool slideToTop,
+    required bool shrinkToPlace,
+    required bool animateEverytime,
+    required bool? shrinkOnMove,
+    required ViewportOffset viewportOffset,
+    required bool scrollToAdded,
+  }) {
     this.shrinkOnMove = shrinkOnMove;
     this.itemController = itemController;
     this.slideToTop = slideToTop;
     this.shrinkToPlace = shrinkToPlace;
     this.slotCount = slotCount;
     this.animateEverytime = animateEverytime;
+    this.scrollToAdded = scrollToAdded;
     _axis = axis;
     _isAttached = true;
-
-    _layouts = itemController._items
-        .map((key, value) => MapEntry(value.identifier, _ItemCurrentLayout(value.layoutData)));
+    _viewportOffset = viewportOffset;
+    _layouts = itemController._items.map((key, value) =>
+        MapEntry(value.identifier, _ItemCurrentLayout(value.layoutData)));
     mountItems();
     _rebuild = true;
   }
@@ -887,9 +839,10 @@ class _EditSession {
 
   final Map<AxisDirection, Map<String, List<_Change>>> _indirectChanges = {};
 
-  void _addResize(_Resize resize, void Function(String id, _Change) onBackChange) {
-    // _resizes[resize.resize.direction] ??= [];
-    // _resizes[resize.resize.direction]!.add(resize.resize);
+  final Map<String, _Swap> _swapChanges = {};
+
+  void _addResize(
+      _Resize resize, void Function(String id, _Change) onBackChange) {
     if (resize.resize.increment && resize.indirectResizes != null) {
       for (var indirect in resize.indirectResizes!.entries) {
         _indirectChanges[indirect.value.direction] ??= {};
@@ -925,51 +878,15 @@ class _EditSession {
     }
   }
 
+  /*void _addSwap(
+      String directId, String indirectId, _Swap direct, _Swap indirect) {
+    _swapChanges[directId] = direct;
+    _swapChanges[indirectId] = indirect;
+  }*/
+
   ///
   final _ItemCurrentLayout editing;
 
   ///
   final _ItemCurrentLayout editingOrigin;
 }
-
-///
-// class _IndexedDashboardItem extends Comparable {
-//   ///
-//   _IndexedDashboardItem(this.id, this.value);
-//
-//   ///
-//   final int value;
-//
-//   ///
-//   final String? id;
-//
-//   @override
-//   bool operator ==(Object other) {
-//     if (other is! _IndexedDashboardItem) {
-//       throw Exception();
-//     }
-//     return other.value == value;
-//   }
-//
-//   ///
-//   @override
-//   int compareTo(Object? other) {
-//     return other is _IndexedDashboardItem
-//         ? value.compareTo(other.value)
-//         : value.compareTo(other as int);
-//   }
-//
-//   @override
-//   String toString() {
-//     return "_IndexedDashboardItem(\"$id\", $value)";
-//   }
-//
-//   // @override
-//   // String toString() {
-//   //   return "INDEX($value) : ID($id)";
-//   // }
-//
-//   ///
-//   @override
-//   int get hashCode => value.hashCode;
-// }
