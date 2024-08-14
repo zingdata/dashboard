@@ -23,10 +23,12 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// Changes cannot be handled.
   DashboardItemController({
     required List<T> items,
-  })  : _items = items.asMap().map(
-              (key, value) => MapEntry(value.identifier, value),
-            ),
-        itemStorageDelegate = null;
+  })  : _items = {},
+        itemStorageDelegate = null {
+    for (var item in items) {
+      _items[item.identifier] = item;
+    }
+  }
 
   /// You can create [DashboardItemController] with an [itemStorageDelegate].
   /// In init state, item information is brought with the delegate.
@@ -72,10 +74,9 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
       Curve curve = Curves.easeInOut}) {
     if (_isAttached) {
       _items[item.identifier] = item;
-      _layoutController!
-          .add(item, mountToTop: mountToTop, duration: duration, curve: curve);
-      itemStorageDelegate?._onItemsAdded(
-          [_getItemWithLayout(item.identifier)], _layoutController!.slotCount);
+      _layoutController!.add(item, mountToTop: mountToTop, duration: duration, curve: curve);
+      itemStorageDelegate
+          ?._onItemsAdded([_getItemWithLayout(item.identifier)], _layoutController!.slotCount);
     } else {
       throw Exception("Not Attached");
     }
@@ -344,8 +345,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
     if (scrollToAdded) {
       if (duration != Duration.zero) {
-        _viewportOffset.animateTo(y * slotEdge,
-            duration: duration, curve: curve);
+        _viewportOffset.animateTo(y * slotEdge, duration: duration, curve: curve);
       } else {
         _viewportOffset.jumpTo(y * slotEdge);
       }
@@ -359,12 +359,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
     required Curve curve,
   }) {
     _layouts![item.identifier] = _ItemCurrentLayout(item.layoutData);
-    this.mountToTop(
-        item.identifier,
-        mountToTop
-            ? 0
-            : getIndex(
-                [_adjustToPosition(item.layoutData), item.layoutData.startY]));
+    this.mountToTop(item.identifier,
+        mountToTop ? 0 : getIndex([_adjustToPosition(item.layoutData), item.layoutData.startY]));
     notifyListeners();
 
     // TODO: scroll to item
@@ -774,8 +770,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
     _axis = axis;
     _isAttached = true;
     _viewportOffset = viewportOffset;
-    _layouts = itemController._items.map((key, value) =>
-        MapEntry(value.identifier, _ItemCurrentLayout(value.layoutData)));
+    _layouts = itemController._items
+        .map((key, value) => MapEntry(value.identifier, _ItemCurrentLayout(value.layoutData)));
     mountItems();
     _rebuild = true;
   }
@@ -841,8 +837,7 @@ class _EditSession {
 
   final Map<String, _Swap> _swapChanges = {};
 
-  void _addResize(
-      _Resize resize, void Function(String id, _Change) onBackChange) {
+  void _addResize(_Resize resize, void Function(String id, _Change) onBackChange) {
     if (resize.resize.increment && resize.indirectResizes != null) {
       for (var indirect in resize.indirectResizes!.entries) {
         _indirectChanges[indirect.value.direction] ??= {};
