@@ -23,10 +23,12 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// Changes cannot be handled.
   DashboardItemController({
     required List<T> items,
-  })  : _items = items.asMap().map(
-              (key, value) => MapEntry(value.identifier, value),
-            ),
-        itemStorageDelegate = null;
+  })  : _items = {},
+        itemStorageDelegate = null {
+    for (var item in items) {
+      _items[item.identifier] = item;
+    }
+  }
 
   /// You can create [DashboardItemController] with an [itemStorageDelegate].
   /// In init state, item information is brought with the delegate.
@@ -70,8 +72,8 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
     if (_isAttached) {
       _items[item.identifier] = item;
       _layoutController!.add(item, mountToTop);
-      itemStorageDelegate?._onItemsAdded(
-          [_getItemWithLayout(item.identifier)], _layoutController!.slotCount);
+      itemStorageDelegate
+          ?._onItemsAdded([_getItemWithLayout(item.identifier)], _layoutController!.slotCount);
     } else {
       throw Exception("Not Attached");
     }
@@ -338,12 +340,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void add(DashboardItem item, [bool mountToTop = true]) {
     _layouts![item.identifier] = _ItemCurrentLayout(item.layoutData);
-    this.mountToTop(
-        item.identifier,
-        mountToTop
-            ? 0
-            : getIndex(
-                [_adjustToPosition(item.layoutData), item.layoutData.startY]));
+    this.mountToTop(item.identifier,
+        mountToTop ? 0 : getIndex([_adjustToPosition(item.layoutData), item.layoutData.startY]));
     notifyListeners();
   }
 
