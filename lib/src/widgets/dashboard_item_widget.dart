@@ -29,7 +29,6 @@ class _DashboardItemWidget extends StatefulWidget {
     required this.itemGlobalPosition,
     required this.offset,
     required this.style,
-    required this.onHover,
   }) : super(key: key);
 
   final _ItemCurrentLayout itemCurrentLayout;
@@ -40,7 +39,6 @@ class _DashboardItemWidget extends StatefulWidget {
   final ItemCurrentPosition itemGlobalPosition;
   final ViewportOffset offset;
   final ItemStyle style;
-  final Function(String id, bool isHovering) onHover;
 
   @override
   State<_DashboardItemWidget> createState() => _DashboardItemWidgetState();
@@ -126,7 +124,6 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     if (this.cursor != cursor) {
       setState(() {
         this.cursor = cursor;
-        widget.onHover(widget.id, true);
       });
     }
   }
@@ -135,7 +132,6 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     setState(() {
       cursor = MouseCursor.defer;
     });
-    widget.onHover(widget.id, false);
   }
 
   Offset transform = Offset.zero;
@@ -200,15 +196,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
         cursor: cursor,
         onHover: _hover,
         onExit: _exit,
-        child: Listener(
-          onPointerDown: (event) {
-            widget.onHover(widget.id, true);
-          },
-          onPointerUp: (event) {
-            widget.onHover(widget.id, false);
-          },
-          child: result,
-        ),
+        child: result,
       );
     }
 
@@ -268,11 +256,12 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     if (!onEditMode && !widget.layoutController.animateEverytime) {
       var cp = widget.itemGlobalPosition;
       return Positioned(
-          left: cp.x,
-          top: cp.y - widget.offset.pixels,
-          width: cp.width,
-          height: cp.height,
-          child: result);
+        left: cp.x,
+        top: cp.y - widget.offset.pixels,
+        width: cp.width,
+        height: cp.height,
+        child: result,
+      );
     }
 
     return AnimatedBuilder(

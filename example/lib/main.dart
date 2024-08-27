@@ -272,7 +272,6 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                       ),
                     );
                   },
-                  onHover: (String id, bool isHovering) {},
                 ),
               ),
       ),

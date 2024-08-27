@@ -28,7 +28,6 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
     super.key,
     required this.itemBuilder,
     required this.dashboardItemController,
-    required this.onHover,
     this.slotCount = 8,
     this.scrollController,
     this.physics,
@@ -201,10 +200,6 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
   /// we can use global position of item to scroll to that item
 
   final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
-
-  /// added by raza for getting hover callback
-
-  final Function(String id, bool isHovering) onHover;
 
   // hacky way to call init without using keys
   final ValueNotifier<int>? initNotifier;
@@ -469,7 +464,6 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
           dashboardController: _layoutController,
           offset: offset,
           itemGlobalPosition: widget.itemGlobalPosition,
-          onHover: widget.onHover,
         );
       },
     );

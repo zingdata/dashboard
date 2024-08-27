@@ -4,6 +4,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:haptic_feedback/haptic_feedback.dart';
+
 import 'widgets/style.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
