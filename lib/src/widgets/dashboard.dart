@@ -28,6 +28,7 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
     super.key,
     required this.itemBuilder,
     required this.dashboardItemController,
+    required this.onHover,
     this.slotCount = 8,
     this.scrollController,
     this.physics,
@@ -201,8 +202,11 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
 
   final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
 
-  
-  // hacky way to call init without using keys  
+  /// added by raza for getting hover callback
+
+  final Function(String id, bool isHovering) onHover;
+
+  // hacky way to call init without using keys
   final ValueNotifier<int>? initNotifier;
 
   @override
@@ -435,38 +439,40 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
 
   Widget dashboardWidget(BoxConstraints constrains) {
     return Scrollable(
-        physics: scrollable ? widget.physics : const NeverScrollableScrollPhysics(),
-        key: _scrollableKey,
-        controller: widget.scrollController,
-        semanticChildCount: widget.dashboardItemController._items.length,
-        dragStartBehavior: widget.dragStartBehavior ?? DragStartBehavior.start,
-        scrollBehavior: widget.scrollBehavior,
-        viewportBuilder: (c, o) {
-          if (!_reloading) _setNewOffset(o, constrains);
-          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-            _stateKey.currentState?._listenOffset(o);
-          });
-          _building = false;
-          return _DashboardStack<T>(
-            itemStyle: widget.itemStyle,
-            shouldCalculateNewDimensions: () {
-              _setNewOffset(o, constrains);
-            },
-            onScrollStateChange: (st) {
-              setState(() {
-                scrollable = st;
-              });
-            },
-            maxScrollOffset: _maxExtend,
-            editModeSettings: widget.editModeSettings,
-            cacheExtend: widget.cacheExtend,
-            key: _stateKey,
-            itemBuilder: widget.itemBuilder,
-            dashboardController: _layoutController,
-            offset: offset,
-            itemGlobalPosition: widget.itemGlobalPosition,
-          );
+      physics: scrollable ? widget.physics : const NeverScrollableScrollPhysics(),
+      key: _scrollableKey,
+      controller: widget.scrollController,
+      semanticChildCount: widget.dashboardItemController._items.length,
+      dragStartBehavior: widget.dragStartBehavior ?? DragStartBehavior.start,
+      scrollBehavior: widget.scrollBehavior,
+      viewportBuilder: (c, o) {
+        if (!_reloading) _setNewOffset(o, constrains);
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _stateKey.currentState?._listenOffset(o);
         });
+        _building = false;
+        return _DashboardStack<T>(
+          itemStyle: widget.itemStyle,
+          shouldCalculateNewDimensions: () {
+            _setNewOffset(o, constrains);
+          },
+          onScrollStateChange: (st) {
+            setState(() {
+              scrollable = st;
+            });
+          },
+          maxScrollOffset: _maxExtend,
+          editModeSettings: widget.editModeSettings,
+          cacheExtend: widget.cacheExtend,
+          key: _stateKey,
+          itemBuilder: widget.itemBuilder,
+          dashboardController: _layoutController,
+          offset: offset,
+          itemGlobalPosition: widget.itemGlobalPosition,
+          onHover: widget.onHover,
+        );
+      },
+    );
   }
 }
 

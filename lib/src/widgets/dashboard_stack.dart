@@ -13,6 +13,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
     required this.shouldCalculateNewDimensions,
     required this.itemStyle,
     this.itemGlobalPosition,
+    required this.onHover,
   });
 
   final ViewportOffset offset;
@@ -22,6 +23,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
   final double maxScrollOffset;
   final void Function(bool scrollable) onScrollStateChange;
   final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
+  final Function(String id, bool isHovering) onHover;
 
   ///
   final DashboardItemBuilder<T> itemBuilder;
@@ -103,6 +105,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       child: list[1],
       offset: viewportOffset,
       layoutController: widget.dashboardController,
+      onHover: widget.onHover,
     );
   }
 

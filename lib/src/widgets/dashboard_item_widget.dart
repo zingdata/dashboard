@@ -1,13 +1,11 @@
 part of dashboard;
 
 class DashboardItemWidget<T extends DashboardItem> extends InheritedWidget {
-  const DashboardItemWidget(
-      {required this.item, required super.child, super.key});
+  const DashboardItemWidget({required this.item, required super.child, super.key});
 
   final DashboardItem item;
 
-  static DashboardItemWidget<T> of<T extends DashboardItem>(
-      BuildContext context) {
+  static DashboardItemWidget<T> of<T extends DashboardItem>(BuildContext context) {
     final DashboardItemWidget? result =
         context.dependOnInheritedWidgetOfExactType<DashboardItemWidget>();
     assert(result != null, 'No DashboardItemWidget found in context');
@@ -21,17 +19,18 @@ class DashboardItemWidget<T extends DashboardItem> extends InheritedWidget {
 }
 
 class _DashboardItemWidget extends StatefulWidget {
-  const _DashboardItemWidget(
-      {required Key key,
-      required this.layoutController,
-      required this.child,
-      required this.editModeSettings,
-      required this.id,
-      required this.itemCurrentLayout,
-      required this.itemGlobalPosition,
-      required this.offset,
-      required this.style})
-      : super(key: key);
+  const _DashboardItemWidget({
+    required Key key,
+    required this.layoutController,
+    required this.child,
+    required this.editModeSettings,
+    required this.id,
+    required this.itemCurrentLayout,
+    required this.itemGlobalPosition,
+    required this.offset,
+    required this.style,
+    required this.onHover,
+  }) : super(key: key);
 
   final _ItemCurrentLayout itemCurrentLayout;
   final Widget child;
@@ -41,6 +40,7 @@ class _DashboardItemWidget extends StatefulWidget {
   final ItemCurrentPosition itemGlobalPosition;
   final ViewportOffset offset;
   final ItemStyle style;
+  final Function(String id, bool isHovering) onHover;
 
   @override
   State<_DashboardItemWidget> createState() => _DashboardItemWidgetState();
@@ -126,6 +126,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     if (this.cursor != cursor) {
       setState(() {
         this.cursor = cursor;
+        widget.onHover(widget.id, true);
       });
     }
   }
@@ -134,6 +135,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     setState(() {
       cursor = MouseCursor.defer;
     });
+    widget.onHover(widget.id, false);
   }
 
   Offset transform = Offset.zero;
@@ -194,15 +196,20 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       if (widget.layoutController.absorbPointer) {
         result = AbsorbPointer(child: result);
       }
-
-      if (kIsWeb) {
-        result = MouseRegion(
-          cursor: cursor,
-          onHover: _hover,
-          onExit: _exit,
+      result = MouseRegion(
+        cursor: cursor,
+        onHover: _hover,
+        onExit: _exit,
+        child: Listener(
+          onPointerDown: (event) {
+            widget.onHover(widget.id, true);
+          },
+          onPointerUp: (event) {
+            widget.onHover(widget.id, false);
+          },
           child: result,
-        );
-      }
+        ),
+      );
     }
 
     var currentEdit =
