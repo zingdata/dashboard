@@ -301,22 +301,12 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
         }
 
         return Positioned(
-            left: left,
-            top: top - widget.offset.pixels,
-            width: cp.width,
-            height: cp.height,
-            child: /*widget.layoutController.isEditing &&
-                    widget.editModeSettings.paintItemForeground
-                ? CustomPaint(
-                    child: w!,
-                    foregroundPainter: _EditModeItemPainter(
-                        style: widget.editModeSettings.foregroundStyle,
-                        tolerance: widget.editModeSettings.resizeCursorSide,
-                        constraints: BoxConstraints(
-                            maxHeight: cp.height, maxWidth: cp.width)),
-                  )
-                :*/
-                w!);
+          left: left,
+          top: top - widget.offset.pixels,
+          width: cp.width,
+          height: cp.height,
+          child: w!,
+        );
       },
     );
   }

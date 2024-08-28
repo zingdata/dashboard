@@ -1,14 +1,15 @@
 part of '../dashboard_base.dart';
 
 class _EditModeBackgroundPainter extends CustomPainter {
-  _EditModeBackgroundPainter(
-      {required this.offset,
-      required this.slotEdge,
-      required this.verticalSlotEdge,
-      required this.slotCount,
-      required this.viewportDelegate,
-      this.fillPosition,
-      this.style = const EditModeBackgroundStyle()});
+  _EditModeBackgroundPainter({
+    required this.offset,
+    required this.slotEdge,
+    required this.verticalSlotEdge,
+    required this.slotCount,
+    required this.viewportDelegate,
+    this.fillPosition,
+    this.style = const EditModeBackgroundStyle(),
+  });
 
   _ViewportDelegate viewportDelegate;
 
@@ -84,25 +85,51 @@ class _EditModeBackgroundPainter extends CustomPainter {
     }
   }
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    drawVerticalLines(canvas);
-    drawHorizontals(canvas);
-    if (fillPosition != null) {
-      canvas.drawRRect(RRect.fromRectAndRadius(fillPosition!, const Radius.circular(8)),
-          Paint()..color = style.fillColor);
+  void drawBlocks(Canvas canvas, Size size) {
+    // Define the padding between blocks
+    double padding = style.blockPadding;
+
+    // Define the radius for each block
+    const Radius blockRadius = Radius.circular(8);
+
+    // Get the current scroll offset
+    double scrollOffset = offset;
+
+    // Calculate the starting point for blocks considering the scroll offset
+    int startRow = (scrollOffset / verticalSlotEdge).floor();
+
+    // Draw the filled blocks with padding and a border radius
+    for (int i = 0; i < slotCount; i++) {
+      for (int j = startRow; j <= startRow + (size.height / verticalSlotEdge).ceil(); j++) {
+        // Calculate the position of the block with padding
+        double left = i * slotEdge + padding / 2;
+        double top = j * verticalSlotEdge - scrollOffset + padding / 2;
+        double blockWidth = slotEdge - padding;
+        double blockHeight = verticalSlotEdge - padding;
+
+        // Create the Rect for the block
+        Rect blockRect = Rect.fromLTWH(left, top, blockWidth, blockHeight);
+
+        // Create an RRect with the specified border radius
+        RRect roundedBlock = RRect.fromRectAndRadius(blockRect, blockRadius);
+
+        // Draw the filled block with the rounded corners and padding
+        Paint blockPaint = Paint()..color = style.emptyItemBgColor;
+        canvas.drawRRect(roundedBlock, blockPaint);
+      }
     }
   }
 
   @override
+  void paint(Canvas canvas, Size size) {
+    if (style.showBlocks) drawBlocks(canvas, size);
+    if (style.showVerticleLine) drawVerticalLines(canvas);
+    if (style.showHorizontalLine) drawHorizontals(canvas);
+  }
+
+  @override
   bool shouldRepaint(_EditModeBackgroundPainter oldDelegate) {
-    return true /*fillPosition != oldDelegate.fillPosition ||
-        offset != oldDelegate.offset ||
-        slotEdge != oldDelegate.slotEdge ||
-        slotCount != oldDelegate.slotCount ||
-        style != oldDelegate.style ||
-        viewportDelegate != oldDelegate.viewportDelegate*/
-        ;
+    return true;
   }
 
   @override
@@ -110,80 +137,3 @@ class _EditModeBackgroundPainter extends CustomPainter {
     return true;
   }
 }
-
-// class _EditModeItemPainter extends CustomPainter {
-//   _EditModeItemPainter(
-//       {required this.style,
-//       required double tolerance,
-//       required this.constraints})
-//       : tolerance = style.sideWidth ?? tolerance;
-//
-//   final EditModeForegroundStyle style;
-//   final double tolerance;
-//   final BoxConstraints constraints;
-//
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//     var outher = Path()
-//       ..moveTo(style.outherRadius, 0)
-//       ..lineTo(constraints.maxWidth - style.outherRadius, 0)
-//       ..arcToPoint(Offset(constraints.maxWidth, style.outherRadius),
-//           radius: Radius.circular(style.outherRadius))
-//       ..lineTo(constraints.maxWidth, constraints.maxHeight - style.outherRadius)
-//       ..arcToPoint(
-//           Offset(
-//               constraints.maxWidth - style.outherRadius, constraints.maxHeight),
-//           radius: Radius.circular(style.outherRadius))
-//       ..lineTo(style.outherRadius, constraints.maxHeight)
-//       ..arcToPoint(Offset(0, constraints.maxHeight - style.outherRadius),
-//           radius: Radius.circular(style.outherRadius))
-//       ..lineTo(0, style.outherRadius)
-//       ..arcToPoint(Offset(style.outherRadius, 0),
-//           radius: Radius.circular(style.outherRadius))
-//       ..close();
-//
-//     var inner = Path()
-//       ..moveTo(style.innerRadius + tolerance, tolerance)
-//       ..lineTo(constraints.maxWidth - style.innerRadius - tolerance, tolerance)
-//       ..arcToPoint(
-//           Offset(constraints.maxWidth, style.innerRadius)
-//               .translate(-tolerance, tolerance),
-//           radius: Radius.circular(style.innerRadius))
-//       ..lineTo(constraints.maxWidth - tolerance,
-//           constraints.maxHeight - style.innerRadius - tolerance)
-//       ..arcToPoint(
-//           Offset(constraints.maxWidth - style.innerRadius,
-//                   constraints.maxHeight)
-//               .translate(-tolerance, -tolerance),
-//           radius: Radius.circular(style.innerRadius))
-//       ..lineTo(style.innerRadius + tolerance, constraints.maxHeight - tolerance)
-//       ..arcToPoint(
-//           Offset(0, constraints.maxHeight - style.innerRadius)
-//               .translate(tolerance, -tolerance),
-//           radius: Radius.circular(style.innerRadius))
-//       ..lineTo(tolerance, style.innerRadius + tolerance)
-//       ..arcToPoint(Offset(style.innerRadius + tolerance, tolerance),
-//           radius: Radius.circular(style.innerRadius))
-//       ..close();
-//
-//     var path = Path.combine(PathOperation.difference, outher, inner);
-//     canvas.drawShadow(path, style.shadowColor, style.shadowElevation,
-//         style.shadowTransparentOccluder);
-//     canvas.drawPath(
-//       path,
-//       Paint()
-//         ..style = PaintingStyle.fill
-//         ..color = style.fillColor,
-//     );
-//   }
-//
-//   @override
-//   bool shouldRepaint(_EditModeItemPainter oldDelegate) {
-//     return constraints != oldDelegate.constraints;
-//   }
-//
-//   @override
-//   bool shouldRebuildSemantics(_EditModeItemPainter oldDelegate) {
-//     return constraints != oldDelegate.constraints;
-//   }
-// }

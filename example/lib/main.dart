@@ -204,7 +204,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                     clipBehavior: Clip.antiAliasWithSaveLayer,
                     type: MaterialType.transparency,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   physics: const RangeMaintainingScrollPhysics(),
                   editModeSettings: EditModeSettings(
@@ -214,9 +214,10 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                     duration: const Duration(milliseconds: 100),
                     backgroundStyle: const EditModeBackgroundStyle(
                       lineColor: Colors.black38,
-                      lineWidth: 0.5,
+                      lineWidth: 1,
                       dualLineHorizontal: false,
                       dualLineVertical: false,
+                      fillColor: Colors.red,
                     ),
                   ),
                   itemBuilder: (ColoredDashboardItem item) {

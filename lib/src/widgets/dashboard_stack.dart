@@ -13,7 +13,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
     required this.shouldCalculateNewDimensions,
     required this.itemStyle,
     this.itemGlobalPosition,
-  
+    this.onHover,
   });
 
   final ViewportOffset offset;
@@ -23,6 +23,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
   final double maxScrollOffset;
   final void Function(bool scrollable) onScrollStateChange;
   final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
+  final Function(String id, bool isHovering)? onHover;
 
   ///
   final DashboardItemBuilder<T> itemBuilder;
@@ -87,12 +88,19 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   }
 
   Widget buildPositioned(List list) {
+    final double paddedSlotEdge = slotEdge;
+    final double paddedVerticalSlotEdge = verticalSlotEdge;
+
+    // Calculate the position of the item within the padded slot
     final itemGlobalPos = (list[0] as _ItemCurrentLayout)._currentPosition(
       viewportDelegate: viewportDelegate,
-      slotEdge: slotEdge,
-      verticalSlotEdge: verticalSlotEdge,
+      slotEdge: paddedSlotEdge,
+      verticalSlotEdge: paddedVerticalSlotEdge,
     );
-    if (widget.itemGlobalPosition != null) widget.itemGlobalPosition!(list[2], itemGlobalPos);
+
+    if (widget.itemGlobalPosition != null) {
+      widget.itemGlobalPosition!(list[2], itemGlobalPos);
+    }
 
     return _DashboardItemWidget(
       style: widget.itemStyle,
@@ -328,7 +336,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   double speed = 0;
 
   void _onMoveStart(Offset local) {
-    Haptics.vibrate(HapticsType.selection);
+    HapticFeedback.selectionClick();
     var holdGlobal =
         Offset(local.dx - viewportDelegate.padding.left, local.dy - viewportDelegate.padding.top);
 
@@ -447,6 +455,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   }
 
   void _onMoveEnd() {
+    HapticFeedback.lightImpact();
     _editing?._key = _keys[_editing!.id]!;
     _editing?._key.currentState
         ?._setLast(_editing!._transform?.value, _editing!._resizePosition?.value)
