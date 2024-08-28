@@ -125,6 +125,10 @@ class _EditModeBackgroundPainter extends CustomPainter {
     if (style.showBlocks) drawBlocks(canvas, size);
     if (style.showVerticleLine) drawVerticalLines(canvas);
     if (style.showHorizontalLine) drawHorizontals(canvas);
+    if (fillPosition != null) {
+      canvas.drawRRect(RRect.fromRectAndRadius(fillPosition!, const Radius.circular(8)),
+          Paint()..color = style.fillColor);
+    }
   }
 
   @override
