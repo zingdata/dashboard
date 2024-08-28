@@ -336,7 +336,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   double speed = 0;
 
   void _onMoveStart(Offset local) {
-    HapticFeedback.selectionClick();
     var holdGlobal =
         Offset(local.dx - viewportDelegate.padding.left, local.dy - viewportDelegate.padding.top);
 
@@ -362,6 +361,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         setState(() {});
         return;
       }
+      HapticFeedback.selectionClick();
       if (itemGlobal.x + widget.editModeSettings.resizeCursorSide > holdGlobal.dx) {
         directions.add(AxisDirection.left);
       }
@@ -373,7 +373,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       if (itemGlobal.endX - widget.editModeSettings.resizeCursorSide < holdGlobal.dx) {
         directions.add(AxisDirection.right);
       }
-
       if ((itemGlobal.endY) - widget.editModeSettings.resizeCursorSide < holdGlobal.dy) {
         directions.add(AxisDirection.down);
       }
@@ -455,11 +454,11 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   }
 
   void _onMoveEnd() {
-    HapticFeedback.lightImpact();
     _editing?._key = _keys[_editing!.id]!;
     _editing?._key.currentState
         ?._setLast(_editing!._transform?.value, _editing!._resizePosition?.value)
         .then((value) {
+      HapticFeedback.lightImpact();
       widget.dashboardController.editSession?.editing._originSize = null;
       _editing?._clearListeners();
       _editing = null;
