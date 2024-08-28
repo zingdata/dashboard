@@ -32,6 +32,10 @@ class EditModeBackgroundStyle {
         dualLineHorizontal == other.dualLineHorizontal &&
         lineWidth == other.lineWidth &&
         lineColor == other.lineColor &&
+        showBlocks == other.showBlocks &&
+        blockRadius == other.blockRadius &&
+        blockPadding == other.blockPadding &&
+        emptyItemBgColor == other.emptyItemBgColor &&
         fillColor == other.fillColor;
   }
 
@@ -72,8 +76,17 @@ class EditModeBackgroundStyle {
   final double blockRadius;
 
   @override
-  int get hashCode =>
-      Object.hash(fillColor, dualLineVertical, dualLineHorizontal, lineWidth, lineColor);
+  int get hashCode => Object.hash(
+        fillColor,
+        dualLineVertical,
+        dualLineHorizontal,
+        lineWidth,
+        lineColor,
+        emptyItemBgColor,
+        blockPadding,
+        blockRadius,
+        showBlocks,
+      );
 }
 
 // class EditModeForegroundStyle {

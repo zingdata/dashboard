@@ -200,7 +200,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                     return Text("$e , $s");
                   },
                   itemStyle: ItemStyle(
-                    color: Colors.transparent,
+                    color: Colors.red,
                     clipBehavior: Clip.antiAliasWithSaveLayer,
                     type: MaterialType.transparency,
                     elevation: 0,
