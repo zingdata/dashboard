@@ -15,6 +15,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
     required this.emptyPlaceholder,
     required this.slotBackground,
     this.itemGlobalPosition,
+    this.onHover,
   });
 
   final Widget? emptyPlaceholder;
@@ -26,6 +27,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
   final double maxScrollOffset;
   final void Function(bool scrollable) onScrollStateChange;
   final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
+  final Function(String id, bool isHovering)? onHover;
 
   ///
   final DashboardItemBuilder<T> itemBuilder;
@@ -39,6 +41,9 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
 }
 
 class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStack<T>> {
+  ValueNotifier<bool> isDraggingNotifier = ValueNotifier(false);
+  MouseCursor cursor = MouseCursor.defer;
+
   ///
   ViewportOffset get viewportOffset => widget.offset;
 
@@ -87,12 +92,19 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   }
 
   Widget buildPositioned(List list) {
+    final double paddedSlotEdge = slotEdge;
+    final double paddedVerticalSlotEdge = verticalSlotEdge;
+
+    // Calculate the position of the item within the padded slot
     final itemGlobalPos = (list[0] as _ItemCurrentLayout)._currentPosition(
       viewportDelegate: viewportDelegate,
-      slotEdge: slotEdge,
-      verticalSlotEdge: verticalSlotEdge,
+      slotEdge: paddedSlotEdge,
+      verticalSlotEdge: paddedVerticalSlotEdge,
     );
-    if (widget.itemGlobalPosition != null) widget.itemGlobalPosition!(list[2], itemGlobalPos);
+
+    if (widget.itemGlobalPosition != null) {
+      widget.itemGlobalPosition!(list[2], itemGlobalPos);
+    }
 
     return _DashboardItemWidget(
       style: widget.itemStyle,
@@ -104,6 +116,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       child: list[1],
       offset: viewportOffset,
       layoutController: widget.dashboardController,
+      onCursorUpdate: onCursorUpdate,
+      isDraggingNotifier: isDraggingNotifier,
     );
   }
 
@@ -327,7 +341,14 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         child: result,
       );
     }
+    result = MouseRegion(cursor: cursor, child: result);
     return result;
+  }
+
+  void onCursorUpdate(MouseCursor cursor) {
+    setState(() {
+      this.cursor = cursor;
+    });
   }
 
   void setSpeed(Offset global) {
@@ -377,6 +398,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   Offset holdOffset = Offset.zero;
 
   void _onMoveStart(Offset local) {
+    isDraggingNotifier.value = true;
+
     var holdGlobal =
         Offset(local.dx - viewportDelegate.padding.left, local.dy - viewportDelegate.padding.top);
 
@@ -402,6 +425,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         setState(() {});
         return;
       }
+      HapticFeedback.selectionClick();
       if (itemGlobal.x + widget.editModeSettings.resizeCursorSide > holdGlobal.dx) {
         directions.add(AxisDirection.left);
       }
@@ -413,7 +437,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       if (itemGlobal.endX - widget.editModeSettings.resizeCursorSide < holdGlobal.dx) {
         directions.add(AxisDirection.right);
       }
-
       if ((itemGlobal.endY) - widget.editModeSettings.resizeCursorSide < holdGlobal.dy) {
         directions.add(AxisDirection.down);
       }
@@ -501,10 +524,12 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   }
 
   void _onMoveEnd() {
+    isDraggingNotifier.value = false;
     _editing?._key = _keys[_editing!.id]!;
     _editing?._key.currentState
         ?._setLast(_editing!._transform?.value, _editing!._resizePosition?.value)
         .then((value) {
+      HapticFeedback.lightImpact();
       widget.dashboardController.editSession?.editing._originSize = null;
       _editing?._clearListeners();
       _editing = null;

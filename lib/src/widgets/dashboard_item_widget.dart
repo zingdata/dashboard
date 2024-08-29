@@ -1,13 +1,11 @@
 part of '../dashboard_base.dart';
 
 class DashboardItemWidget<T extends DashboardItem> extends InheritedWidget {
-  const DashboardItemWidget(
-      {required this.item, required super.child, super.key});
+  const DashboardItemWidget({required this.item, required super.child, super.key});
 
   final DashboardItem item;
 
-  static DashboardItemWidget<T> of<T extends DashboardItem>(
-      BuildContext context) {
+  static DashboardItemWidget<T> of<T extends DashboardItem>(BuildContext context) {
     final DashboardItemWidget? result =
         context.dependOnInheritedWidgetOfExactType<DashboardItemWidget>();
     assert(result != null, 'No DashboardItemWidget found in context');
@@ -21,17 +19,19 @@ class DashboardItemWidget<T extends DashboardItem> extends InheritedWidget {
 }
 
 class _DashboardItemWidget extends StatefulWidget {
-  const _DashboardItemWidget(
-      {required Key key,
-      required this.layoutController,
-      required this.child,
-      required this.editModeSettings,
-      required this.id,
-      required this.itemCurrentLayout,
-      required this.itemGlobalPosition,
-      required this.offset,
-      required this.style})
-      : super(key: key);
+  const _DashboardItemWidget({
+    required Key key,
+    required this.layoutController,
+    required this.child,
+    required this.editModeSettings,
+    required this.id,
+    required this.itemCurrentLayout,
+    required this.itemGlobalPosition,
+    required this.offset,
+    required this.style,
+    required this.onCursorUpdate,
+    required this.isDraggingNotifier,
+  }) : super(key: key);
 
   final _ItemCurrentLayout itemCurrentLayout;
   final Widget child;
@@ -41,6 +41,8 @@ class _DashboardItemWidget extends StatefulWidget {
   final ItemCurrentPosition itemGlobalPosition;
   final ViewportOffset offset;
   final ItemStyle style;
+  final Function(MouseCursor cursor) onCursorUpdate;
+  final ValueNotifier<bool> isDraggingNotifier;
 
   @override
   State<_DashboardItemWidget> createState() => _DashboardItemWidgetState();
@@ -95,8 +97,18 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           widget.editModeSettings.resizeCursorSide;
 
   void _hover(PointerHoverEvent hover) {
-    var x = hover.localPosition.dx;
-    var y = hover.localPosition.dy;
+    var newCursor = _determineCursor(hover.localPosition);
+    if (cursor != newCursor) {
+      setState(() {
+        cursor = newCursor;
+        widget.onCursorUpdate(cursor);
+      });
+    }
+  }
+
+  MouseCursor _determineCursor(Offset localPosition) {
+    var x = localPosition.dx;
+    var y = localPosition.dy;
     MouseCursor cursor;
     var r = onRightSide(x);
     var l = onLeftSide(x);
@@ -123,17 +135,16 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     } else {
       cursor = SystemMouseCursors.move;
     }
-    if (this.cursor != cursor) {
-      setState(() {
-        this.cursor = cursor;
-      });
-    }
+    return cursor;
   }
 
   void _exit(PointerExitEvent exit) {
-    setState(() {
-      cursor = MouseCursor.defer;
-    });
+    if (!widget.isDraggingNotifier.value) {
+      setState(() {
+        cursor = MouseCursor.defer;
+      });
+      widget.onCursorUpdate(cursor);
+    }
   }
 
   Offset transform = Offset.zero;
@@ -194,15 +205,12 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       if (widget.layoutController.absorbPointer) {
         result = AbsorbPointer(child: result);
       }
-
-      if (kIsWeb) {
-        result = MouseRegion(
-          cursor: cursor,
-          onHover: _hover,
-          onExit: _exit,
-          child: result,
-        );
-      }
+      result = MouseRegion(
+        cursor: cursor,
+        onHover: _hover,
+        onExit: _exit,
+        child: result,
+      );
     }
 
     var currentEdit =
@@ -261,11 +269,12 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     if (!onEditMode && !widget.layoutController.animateEverytime) {
       var cp = widget.itemGlobalPosition;
       return Positioned(
-          left: cp.x,
-          top: cp.y - widget.offset.pixels,
-          width: cp.width,
-          height: cp.height,
-          child: result);
+        left: cp.x,
+        top: cp.y - widget.offset.pixels,
+        width: cp.width,
+        height: cp.height,
+        child: result,
+      );
     }
 
     return AnimatedBuilder(

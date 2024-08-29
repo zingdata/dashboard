@@ -52,7 +52,9 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
       this.itemGlobalPosition,
       this.itemStyle = const ItemStyle(),
       this.scrollToAdded = true,
-      this.slotBackgroundBuilder})
+      this.slotBackgroundBuilder,
+          this.initNotifier,
+      })
       : assert((slotHeight == null && slotAspectRatio == null) ||
             !(slotHeight != null && slotAspectRatio != null)),
         editModeSettings = editModeSettings ?? EditModeSettings();
@@ -213,6 +215,9 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
 
   final Function(String id, ItemCurrentPosition position)? itemGlobalPosition;
 
+  // hacky way to call init without using keys
+  final ValueNotifier<int>? initNotifier;
+
   @override
   State<Dashboard<T>> createState() => _DashboardState<T>();
 }
@@ -222,6 +227,18 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
   ///
   @override
   void initState() {
+    init();
+    if (widget.initNotifier != null) {
+      widget.initNotifier?.addListener(() {
+        if (widget.initNotifier!.value > 1) {
+          init();
+        }
+      });
+    }
+    super.initState();
+  }
+
+  void init() {
     _layoutController = _DashboardLayoutController<T>();
     _layoutController.addListener(() {
       /// added mounted by *raza*
@@ -246,7 +263,6 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
         }
       });
     }
-    super.initState();
   }
 
   GlobalKey myWidgetKey = GlobalKey();

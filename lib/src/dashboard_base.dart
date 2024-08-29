@@ -4,12 +4,11 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 
-import 'widgets/style.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 part 'widgets/dashboard.dart';
 
@@ -36,3 +35,5 @@ part 'exceptions/unbounded.dart';
 
 part 'controller/dashboard_controller.dart';
 part 'controller/dashboard_item_storage.dart';
+
+part 'widgets/style.dart';

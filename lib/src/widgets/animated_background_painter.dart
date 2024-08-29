@@ -51,9 +51,10 @@ class _AnimatedBackgroundPainterState extends State<_AnimatedBackgroundPainter>
     if (widget.editModeSettings.fillEditingBackground &&
         widget.layoutController.editSession != null) {
       var pos = widget.layoutController.editSession?.editing._currentPosition(
-          viewportDelegate: widget.layoutController._viewportDelegate,
-          slotEdge: widget.layoutController.slotEdge,
-          verticalSlotEdge: widget.layoutController.verticalSlotEdge);
+        viewportDelegate: widget.layoutController._viewportDelegate,
+        slotEdge: widget.layoutController.slotEdge,
+        verticalSlotEdge: widget.layoutController.verticalSlotEdge,
+      );
       var rect = Rect.fromLTWH(pos!.x - viewportDelegate.padding.left,
           pos.y - offset - viewportDelegate.padding.top, pos.width, pos.height);
 

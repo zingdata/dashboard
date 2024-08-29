@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-
+part of '../dashboard_base.dart';
 class ItemStyle {
   const ItemStyle({
     this.color,

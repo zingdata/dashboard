@@ -11,13 +11,20 @@ part of '../dashboard_base.dart';
 /// very obscure colors to reflect the sense of editing well.
 class EditModeBackgroundStyle {
   /// in default lines are dual.
-  const EditModeBackgroundStyle(
-      {this.dualLineVertical = true,
-      this.dualLineHorizontal = true,
-      this.lineWidth = 0.7,
-      this.lineColor = Colors.black54,
-      this.fillColor = Colors.black38,
-      this.outherRadius = 8});
+  const EditModeBackgroundStyle({
+    this.dualLineVertical = true,
+    this.dualLineHorizontal = true,
+    this.showHorizontalLine = false,
+    this.showVerticleLine = false,
+    this.lineWidth = 0.7,
+    this.lineColor = Colors.black54,
+    this.fillColor = Colors.black38,
+    this.emptyItemBgColor = Colors.grey,
+    this.blockPadding = 8.0,
+    this.blockRadius = 8.0,
+    this.showBlocks = true,
+    this.outherRadius = 8,
+  });
 
   @override
   bool operator ==(Object other) {
@@ -26,6 +33,10 @@ class EditModeBackgroundStyle {
         dualLineHorizontal == other.dualLineHorizontal &&
         lineWidth == other.lineWidth &&
         lineColor == other.lineColor &&
+        showBlocks == other.showBlocks &&
+        blockRadius == other.blockRadius &&
+        blockPadding == other.blockPadding &&
+        emptyItemBgColor == other.emptyItemBgColor &&
         fillColor == other.fillColor;
   }
 
@@ -34,14 +45,23 @@ class EditModeBackgroundStyle {
   /// Editing item background filling color.
   final Color fillColor;
 
+  /// empty item bg color
+  final Color emptyItemBgColor;
+
   /// If [dualLineVertical] lines draw exactly slots ends and starts vertically.
   /// Else only one line draw center of the horizontalSpace.
   final bool dualLineVertical;
+
+  /// [showVerticleLine]  one line draw center of the horizontalSpace.
+  final bool showVerticleLine;
 
   /// If [dualLineVertical] lines draw exactly slots ends and starts
   /// horizontally.
   /// Else only one line draw center of the verticalSpace.
   final bool dualLineHorizontal;
+
+  /// [showHorizontalLine] draws a horizontal one line draw center of the verticalSpace.
+  final bool showHorizontalLine;
 
   /// Line thickness.
   final double lineWidth;
@@ -49,9 +69,27 @@ class EditModeBackgroundStyle {
   /// Line color
   final Color lineColor;
 
+  // to show empty blocks
+  final bool showBlocks;
+
+  // empty block padding
+  final double blockPadding;
+
+  // empty block radius
+  final double blockRadius;
+
   @override
-  int get hashCode =>
-      Object.hash(fillColor, dualLineVertical, dualLineHorizontal, lineWidth, lineColor);
+  int get hashCode => Object.hash(
+        fillColor,
+        dualLineVertical,
+        dualLineHorizontal,
+        lineWidth,
+        lineColor,
+        emptyItemBgColor,
+        blockPadding,
+        blockRadius,
+        showBlocks,
+      );
 }
 
 // class EditModeForegroundStyle {
