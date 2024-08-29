@@ -29,6 +29,8 @@ class _DashboardItemWidget extends StatefulWidget {
     required this.itemGlobalPosition,
     required this.offset,
     required this.style,
+    required this.onCursorUpdate,
+    required this.isDraggingNotifier,
   }) : super(key: key);
 
   final _ItemCurrentLayout itemCurrentLayout;
@@ -39,6 +41,8 @@ class _DashboardItemWidget extends StatefulWidget {
   final ItemCurrentPosition itemGlobalPosition;
   final ViewportOffset offset;
   final ItemStyle style;
+  final Function(MouseCursor cursor) onCursorUpdate;
+  final ValueNotifier<bool> isDraggingNotifier;
 
   @override
   State<_DashboardItemWidget> createState() => _DashboardItemWidgetState();
@@ -93,8 +97,18 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           widget.editModeSettings.resizeCursorSide;
 
   void _hover(PointerHoverEvent hover) {
-    var x = hover.localPosition.dx;
-    var y = hover.localPosition.dy;
+    var newCursor = _determineCursor(hover.localPosition);
+    if (cursor != newCursor) {
+      setState(() {
+        cursor = newCursor;
+        widget.onCursorUpdate(cursor);
+      });
+    }
+  }
+
+  MouseCursor _determineCursor(Offset localPosition) {
+    var x = localPosition.dx;
+    var y = localPosition.dy;
     MouseCursor cursor;
     var r = onRightSide(x);
     var l = onLeftSide(x);
@@ -121,17 +135,16 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     } else {
       cursor = SystemMouseCursors.move;
     }
-    if (this.cursor != cursor) {
-      setState(() {
-        this.cursor = cursor;
-      });
-    }
+    return cursor;
   }
 
   void _exit(PointerExitEvent exit) {
-    setState(() {
-      cursor = MouseCursor.defer;
-    });
+    if (!widget.isDraggingNotifier.value) {
+      setState(() {
+        cursor = MouseCursor.defer;
+      });
+      widget.onCursorUpdate(cursor);
+    }
   }
 
   Offset transform = Offset.zero;

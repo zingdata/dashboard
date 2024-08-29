@@ -37,6 +37,9 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
 }
 
 class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStack<T>> {
+  ValueNotifier<bool> isDraggingNotifier = ValueNotifier(false);
+  MouseCursor cursor = MouseCursor.defer;
+
   ///
   ViewportOffset get viewportOffset => widget.offset;
 
@@ -112,6 +115,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       child: list[1],
       offset: viewportOffset,
       layoutController: widget.dashboardController,
+      onCursorUpdate: onCursorUpdate,
+      isDraggingNotifier: isDraggingNotifier,
     );
   }
 
@@ -294,7 +299,14 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         child: result,
       );
     }
+    result = MouseRegion(cursor: cursor, child: result);
     return result;
+  }
+
+  void onCursorUpdate(MouseCursor cursor) {
+    setState(() {
+      this.cursor = cursor;
+    });
   }
 
   void setSpeed(Offset global) {
@@ -336,6 +348,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   double speed = 0;
 
   void _onMoveStart(Offset local) {
+    isDraggingNotifier.value = true;
+
     var holdGlobal =
         Offset(local.dx - viewportDelegate.padding.left, local.dy - viewportDelegate.padding.top);
 
@@ -454,6 +468,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   }
 
   void _onMoveEnd() {
+    isDraggingNotifier.value = false;
     _editing?._key = _keys[_editing!.id]!;
     _editing?._key.currentState
         ?._setLast(_editing!._transform?.value, _editing!._resizePosition?.value)
