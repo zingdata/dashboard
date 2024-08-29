@@ -53,17 +53,28 @@ packages:
     dependency: "direct main"
     description:
       name: cupertino_icons
+<<<<<<< HEAD
       sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+=======
+      sha256: d57953e10f9f8327ce64a508a355f0b1ec902193f66288e8cb5070e7c47eeb2d
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.6"
+>>>>>>> master
   dashboard:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
+<<<<<<< HEAD
     version: "0.0.4"
+=======
+    version: "0.0.5"
+>>>>>>> master
   fake_async:
     dependency: transitive
     description:
@@ -105,10 +116,10 @@ packages:
     dependency: "direct dev"
     description:
       name: flutter_lints
-      sha256: b543301ad291598523947dc534aaddc5aaad597b709d2426d3a0e0d44c5cb493
+      sha256: e2a421b7e59244faef694ba7b30562e489c2b489866e505074eb005cd7060db7
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.4"
+    version: "3.0.1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -123,34 +134,55 @@ packages:
     dependency: transitive
     description:
       name: leak_tracker
+<<<<<<< HEAD
       sha256: "3f87a60e8c63aecc975dda1ceedbc8f24de75f09e4856ea27daf8958f2f0ce05"
       url: "https://pub.dev"
     source: hosted
     version: "10.0.5"
+=======
+      sha256: "78eb209deea09858f5269f5a5b02be4049535f568c07b275096836f01ea323fa"
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.0.0"
+>>>>>>> master
   leak_tracker_flutter_testing:
     dependency: transitive
     description:
       name: leak_tracker_flutter_testing
+<<<<<<< HEAD
       sha256: "932549fb305594d82d7183ecd9fa93463e9914e1b67cacc34bc40906594a1806"
       url: "https://pub.dev"
     source: hosted
     version: "3.0.5"
+=======
+      sha256: b46c5e37c19120a8a01918cfaf293547f47269f7cb4b0058f21531c2465d6ef0
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
+>>>>>>> master
   leak_tracker_testing:
     dependency: transitive
     description:
       name: leak_tracker_testing
+<<<<<<< HEAD
       sha256: "6ba465d5d76e67ddf503e1161d1f4a6bc42306f9d66ca1e8f079a47290fb06d3"
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
+=======
+      sha256: a597f72a664dbd293f3bfc51f9ba69816f84dcd403cdac7066cb3f6003f3ab47
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
+>>>>>>> master
   lints:
     dependency: transitive
     description:
       name: lints
-      sha256: a2c3d198cb5ea2e179926622d433331d8b58374ab8f29cdda6e863bd62fd369c
+      sha256: cbf8d4b858bb0134ef3ef87841abdf8d63bfc255c266b7bf6b39daa1085c4290
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "3.0.0"
   matcher:
     dependency: transitive
     description:
@@ -227,58 +259,107 @@ packages:
     dependency: "direct main"
     description:
       name: shared_preferences
+<<<<<<< HEAD
       sha256: c272f9cabca5a81adc9b0894381e9c1def363e980f960fa903c604c471b22f68
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
+=======
+      sha256: "81429e4481e1ccfb51ede496e916348668fd0921627779233bd24cc3ff6abd02"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.2"
+>>>>>>> master
   shared_preferences_android:
     dependency: transitive
     description:
       name: shared_preferences_android
+<<<<<<< HEAD
       sha256: a7e8467e9181cef109f601e3f65765685786c1a738a83d7fbbde377589c0d974
       url: "https://pub.dev"
     source: hosted
     version: "2.3.1"
+=======
+      sha256: "8568a389334b6e83415b6aae55378e158fbc2314e074983362d20c562780fb06"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.1"
+>>>>>>> master
   shared_preferences_foundation:
     dependency: transitive
     description:
       name: shared_preferences_foundation
+<<<<<<< HEAD
       sha256: c4b35f6cb8f63c147312c054ce7c2254c8066745125264f0c88739c417fc9d9f
       url: "https://pub.dev"
     source: hosted
     version: "2.5.2"
+=======
+      sha256: "7708d83064f38060c7b39db12aefe449cb8cdc031d6062280087bc4cdb988f5c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.5"
+>>>>>>> master
   shared_preferences_linux:
     dependency: transitive
     description:
       name: shared_preferences_linux
+<<<<<<< HEAD
       sha256: "580abfd40f415611503cae30adf626e6656dfb2f0cee8f465ece7b6defb40f2f"
       url: "https://pub.dev"
     source: hosted
     version: "2.4.1"
+=======
+      sha256: "9f2cbcf46d4270ea8be39fa156d86379077c8a5228d9dfdb1164ae0bb93f1faa"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.2"
+>>>>>>> master
   shared_preferences_platform_interface:
     dependency: transitive
     description:
       name: shared_preferences_platform_interface
+<<<<<<< HEAD
       sha256: "57cbf196c486bc2cf1f02b85784932c6094376284b3ad5779d1b1c6c6a816b80"
       url: "https://pub.dev"
     source: hosted
     version: "2.4.1"
+=======
+      sha256: d4ec5fc9ebb2f2e056c617112aa75dcf92fc2e4faaf2ae999caa297473f75d8a
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
+>>>>>>> master
   shared_preferences_web:
     dependency: transitive
     description:
       name: shared_preferences_web
+<<<<<<< HEAD
       sha256: d2ca4132d3946fec2184261726b355836a82c33d7d5b67af32692aff18a4684e
       url: "https://pub.dev"
     source: hosted
     version: "2.4.2"
+=======
+      sha256: "7b15ffb9387ea3e237bb7a66b8a23d2147663d391cafc5c8f37b2e7b4bde5d21"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.2"
+>>>>>>> master
   shared_preferences_windows:
     dependency: transitive
     description:
       name: shared_preferences_windows
+<<<<<<< HEAD
       sha256: "94ef0f72b2d71bc3e700e025db3710911bd51a71cefb65cc609dd0d9a982e3c1"
       url: "https://pub.dev"
     source: hosted
     version: "2.4.1"
+=======
+      sha256: "841ad54f3c8381c480d0c9b508b89a34036f512482c407e6df7a9c4aa2ef8f59"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.2"
+>>>>>>> master
   sky_engine:
     dependency: transitive
     description: flutter
@@ -336,66 +417,122 @@ packages:
     dependency: "direct main"
     description:
       name: url_launcher
+<<<<<<< HEAD
       sha256: "21b704ce5fa560ea9f3b525b43601c678728ba46725bab9b01187b4831377ed3"
       url: "https://pub.dev"
     source: hosted
     version: "6.3.0"
+=======
+      sha256: c512655380d241a337521703af62d2c122bf7b77a46ff7dd750092aa9433499c
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.2.4"
+>>>>>>> master
   url_launcher_android:
     dependency: transitive
     description:
       name: url_launcher_android
+<<<<<<< HEAD
       sha256: f0c73347dfcfa5b3db8bc06e1502668265d39c08f310c29bff4e28eea9699f79
       url: "https://pub.dev"
     source: hosted
     version: "6.3.9"
+=======
+      sha256: "507dc655b1d9cb5ebc756032eb785f114e415f91557b73bf60b7e201dfedeb2f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.2.2"
+>>>>>>> master
   url_launcher_ios:
     dependency: transitive
     description:
       name: url_launcher_ios
+<<<<<<< HEAD
       sha256: e43b677296fadce447e987a2f519dcf5f6d1e527dc35d01ffab4fff5b8a7063e
       url: "https://pub.dev"
     source: hosted
     version: "6.3.1"
+=======
+      sha256: "75bb6fe3f60070407704282a2d295630cab232991eb52542b18347a8a941df03"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.2.4"
+>>>>>>> master
   url_launcher_linux:
     dependency: transitive
     description:
       name: url_launcher_linux
+<<<<<<< HEAD
       sha256: e2b9622b4007f97f504cd64c0128309dfb978ae66adbe944125ed9e1750f06af
       url: "https://pub.dev"
     source: hosted
     version: "3.2.0"
+=======
+      sha256: ab360eb661f8879369acac07b6bb3ff09d9471155357da8443fd5d3cf7363811
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
+>>>>>>> master
   url_launcher_macos:
     dependency: transitive
     description:
       name: url_launcher_macos
+<<<<<<< HEAD
       sha256: "9a1a42d5d2d95400c795b2914c36fdcb525870c752569438e4ebb09a2b5d90de"
       url: "https://pub.dev"
     source: hosted
     version: "3.2.0"
+=======
+      sha256: b7244901ea3cf489c5335bdacda07264a6e960b1c1b1a9f91e4bc371d9e68234
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
+>>>>>>> master
   url_launcher_platform_interface:
     dependency: transitive
     description:
       name: url_launcher_platform_interface
+<<<<<<< HEAD
       sha256: "552f8a1e663569be95a8190206a38187b531910283c3e982193e4f2733f01029"
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
+=======
+      sha256: "4aca1e060978e19b2998ee28503f40b5ba6226819c2b5e3e4d1821e8ccd92198"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
+>>>>>>> master
   url_launcher_web:
     dependency: transitive
     description:
       name: url_launcher_web
+<<<<<<< HEAD
       sha256: "772638d3b34c779ede05ba3d38af34657a05ac55b06279ea6edd409e323dca8e"
       url: "https://pub.dev"
     source: hosted
     version: "2.3.3"
+=======
+      sha256: fff0932192afeedf63cdd50ecbb1bc825d31aed259f02bb8dba0f3b729a5e88b
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.3"
+>>>>>>> master
   url_launcher_windows:
     dependency: transitive
     description:
       name: url_launcher_windows
+<<<<<<< HEAD
       sha256: "49c10f879746271804767cb45551ec5592cdab00ee105c06dddde1a98f73b185"
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
+=======
+      sha256: ecf9725510600aa2bb6d7ddabe16357691b6d2805f66216a97d1b881e21beff7
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
+>>>>>>> master
   vector_math:
     dependency: transitive
     description:
@@ -408,10 +545,17 @@ packages:
     dependency: transitive
     description:
       name: vm_service
+<<<<<<< HEAD
       sha256: f652077d0bdf60abe4c1f6377448e8655008eef28f128bc023f7b5e8dfeb48fc
       url: "https://pub.dev"
     source: hosted
     version: "14.2.4"
+=======
+      sha256: b3d56ff4341b8f182b96aceb2fa20e3dcb336b9f867bc0eafc0de10f1048e957
+      url: "https://pub.dev"
+    source: hosted
+    version: "13.0.0"
+>>>>>>> master
   web:
     dependency: transitive
     description:
@@ -429,5 +573,10 @@ packages:
     source: hosted
     version: "1.0.4"
 sdks:
+<<<<<<< HEAD
   dart: ">=3.4.0 <4.0.0"
   flutter: ">=3.22.0"
+=======
+  dart: ">=3.2.0 <4.0.0"
+  flutter: ">=3.16.0"
+>>>>>>> master

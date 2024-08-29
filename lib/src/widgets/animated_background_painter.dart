@@ -2,7 +2,9 @@ part of '../dashboard_base.dart';
 
 class _AnimatedBackgroundPainter extends StatefulWidget {
   const _AnimatedBackgroundPainter(
-      {required this.layoutController, required this.editModeSettings, required this.offset});
+      {required this.layoutController,
+      required this.editModeSettings,
+      required this.offset});
 
   final _DashboardLayoutController layoutController;
   final EditModeSettings editModeSettings;
@@ -30,6 +32,12 @@ class _AnimatedBackgroundPainterState extends State<_AnimatedBackgroundPainter>
     _animationController =
         AnimationController(vsync: this, duration: widget.editModeSettings.duration);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   bool onAnimation = false;

@@ -1,21 +1,21 @@
 part of '../dashboard_base.dart';
 
 class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
-  const _DashboardStack(
-      {Key? key,
-      required this.editModeSettings,
-      required this.offset,
-      required this.dashboardController,
-      required this.itemBuilder,
-      required this.cacheExtend,
-      required this.maxScrollOffset,
-      required this.onScrollStateChange,
-      required this.shouldCalculateNewDimensions,
-      required this.itemStyle,
-      required this.emptyPlaceholder,
-      required this.slotBackground,
-        this.itemGlobalPosition,})
-      : super(key: key);
+  const _DashboardStack({
+    super.key,
+    required this.editModeSettings,
+    required this.offset,
+    required this.dashboardController,
+    required this.itemBuilder,
+    required this.cacheExtend,
+    required this.maxScrollOffset,
+    required this.onScrollStateChange,
+    required this.shouldCalculateNewDimensions,
+    required this.itemStyle,
+    required this.emptyPlaceholder,
+    required this.slotBackground,
+    this.itemGlobalPosition,
+  });
 
   final Widget? emptyPlaceholder;
   final ViewportOffset offset;
@@ -44,13 +44,10 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
   _ViewportDelegate get viewportDelegate => widget.dashboardController._viewportDelegate;
 
-  ///
   double get pixels => viewportOffset.pixels;
 
-  ///
   double get width => viewportDelegate.resolvedConstrains.maxWidth;
 
-  ///
   double get height => viewportDelegate.resolvedConstrains.maxHeight;
 
   @override
@@ -147,19 +144,15 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
     int i = startIndex;
 
-    var l =
-        viewportDelegate.padding.left + (viewportDelegate.crossAxisSpace / 2);
-    var t = viewportDelegate.padding.top -
-        pixels +
-        (viewportDelegate.mainAxisSpace / 2);
+    var l = viewportDelegate.padding.left + (viewportDelegate.crossAxisSpace / 2);
+    var t = viewportDelegate.padding.top - pixels + (viewportDelegate.mainAxisSpace / 2);
     var w = slotEdge - viewportDelegate.crossAxisSpace;
     var h = verticalSlotEdge - viewportDelegate.mainAxisSpace;
 
     while (i <= endIndex) {
       var x = i % widget.dashboardController.slotCount;
       var y = (i / widget.dashboardController.slotCount).floor();
-      widget.slotBackground!._itemController =
-          widget.dashboardController.itemController;
+      widget.slotBackground!._itemController = widget.dashboardController.itemController;
       res.add(Positioned(
         left: x * slotEdge + l,
         top: y * verticalSlotEdge + t,
@@ -193,8 +186,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
     var endPixels = viewportOffset.pixels + height + widget.cacheExtend;
     var endY = (endPixels / verticalSlotEdge).ceil();
-    endIndex = widget.dashboardController
-        .getIndex([widget.dashboardController.slotCount - 1, endY]);
+    endIndex =
+        widget.dashboardController.getIndex([widget.dashboardController.slotCount - 1, endY]);
 
     var needs = <String>[];
     var key = startIndex;
@@ -241,6 +234,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
     }
 
     var needDelete = [...afterIt, ...beforeIt];
+
     var edit = widget.dashboardController.editSession?.editing;
 
     for (var n in needDelete) {
@@ -284,15 +278,11 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                 (element) => element.value[2] != widget.dashboardController.editSession?.editing.id)
             .map((e) {
           return buildPositioned(e.value);
-        }).toList(),
+        }),
         if (widget.dashboardController.itemController._items.isEmpty &&
             !widget.dashboardController._isEditing)
           Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              top: 0,
-              child: widget.emptyPlaceholder ?? Container()),
+              bottom: 0, left: 0, right: 0, top: 0, child: widget.emptyPlaceholder ?? Container()),
         ...?(widget.dashboardController.editSession == null
             ? null
             : [buildPositioned(_widgetsMap[widget.dashboardController.editSession?.editing.id]!)])
@@ -306,7 +296,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                 _onMoveStart(panStart.localPosition);
               }
             : null,
-        onPanUpdate: widget.editModeSettings.panEnabled
+        onPanUpdate: widget.editModeSettings.panEnabled && edit != null && edit.id.isNotEmpty
             ? (u) {
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
@@ -322,12 +312,13 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                 _onMoveStart(longPressStart.localPosition);
               }
             : null,
-        onLongPressMoveUpdate: widget.editModeSettings.longPressEnabled
-            ? (u) {
-                setSpeed(u.localPosition);
-                _onMoveUpdate(u.localPosition);
-              }
-            : null,
+        onLongPressMoveUpdate:
+            widget.editModeSettings.longPressEnabled && edit != null && edit.id.isNotEmpty
+                ? (u) {
+                    setSpeed(u.localPosition);
+                    _onMoveUpdate(u.localPosition);
+                  }
+                : null,
         onLongPressEnd: widget.editModeSettings.longPressEnabled
             ? (e) {
                 _onMoveEnd();
@@ -366,6 +357,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
           var n = pixels + speed;
 
           viewportOffset.jumpTo(n.clamp(0.0, (1 << 31).toDouble()));
+
           scroll();
         }
       } catch (e) {
@@ -461,48 +453,49 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
   bool isResizing(AxisDirection direction) => _holdDirections!.contains(direction);
 
   void _onMoveUpdate(Offset local) {
-    if (_editing != null) {
-      var e = widget.dashboardController._endsTree.lastKey() ?? 0;
+    if (_editing == null) {
+      return;
+    }
 
-      if (_editingResize) {
-        var scrollDifference = pixels - _startScrollPixels!;
-        var differences = <String>{};
-        var resizeMoveResult = _editing!._resizeMove(
-            holdDirections: _holdDirections!,
-            local: local,
-            onChange: (s) {
-              differences.add(s);
-            },
-            start: _moveStartOffset!,
-            scrollDifference: scrollDifference);
+    var e = widget.dashboardController._endsTree.lastKey() ?? 0;
 
-        if (resizeMoveResult.isChanged) {
-          setState(() {
-            _moveStartOffset = _moveStartOffset! + resizeMoveResult.startDifference;
-            _widgetsMap.remove(_editing!.id);
-            for (var r in differences) {
-              _widgetsMap.remove(r);
-            }
-            if (_editing!._endIndex > (e)) {
-              widget.shouldCalculateNewDimensions();
-            }
-          });
-        }
-      } else {
-        var resizeMoveResult = _editing!._transformUpdate(
-            local - _moveStartOffset!,
-            pixels - _startScrollPixels!,
-            holdOffset);
-        if (resizeMoveResult != null && resizeMoveResult.isChanged) {
-          setState(() {
-            _moveStartOffset = _moveStartOffset! + resizeMoveResult.startDifference;
-            _widgetsMap.remove(_editing!.id);
+    if (_editingResize) {
+      var scrollDifference = pixels - _startScrollPixels!;
+      var differences = <String>{};
+      var resizeMoveResult = _editing!._resizeMove(
+          holdDirections: _holdDirections!,
+          local: local,
+          onChange: (s) {
+            differences.add(s);
+          },
+          start: _moveStartOffset!,
+          scrollDifference: scrollDifference);
 
-            if (_editing!._endIndex > (e)) {
-              widget.shouldCalculateNewDimensions();
-            }
-          });
-        }
+      if (resizeMoveResult.isChanged) {
+        setState(() {
+          _moveStartOffset = _moveStartOffset! + resizeMoveResult.startDifference;
+          _widgetsMap.remove(_editing!.id);
+          for (var r in differences) {
+            _widgetsMap.remove(r);
+          }
+          if (_editing!._endIndex > (e)) {
+            widget.shouldCalculateNewDimensions();
+          }
+        });
+      }
+    } else {
+      var resizeMoveResult = _editing!
+          ._transformUpdate(local - _moveStartOffset!, pixels - _startScrollPixels!, holdOffset);
+
+      if (resizeMoveResult != null && resizeMoveResult.isChanged) {
+        setState(() {
+          _moveStartOffset = _moveStartOffset! + resizeMoveResult.startDifference;
+          _widgetsMap.remove(_editing!.id);
+
+          if (_editing!._endIndex > (e)) {
+            widget.shouldCalculateNewDimensions();
+          }
+        });
       }
     }
   }
@@ -518,9 +511,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       _moveStartOffset = null;
       _holdDirections = null;
       _startScrollPixels = null;
-      speed = 0;
       widget.dashboardController.saveEditSession();
     });
+    speed = 0;
     widget.onScrollStateChange(true);
   }
 }

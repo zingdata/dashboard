@@ -249,6 +249,15 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
     super.initState();
   }
 
+  GlobalKey myWidgetKey = GlobalKey();
+
+  bool get hasDimensions {
+    final RenderBox? renderBox =
+    myWidgetKey.currentContext?.findRenderObject() as RenderBox?;
+    // Checks if the renderBox is not null and has a non-zero size
+    return renderBox != null && renderBox.hasSize;
+  }
+
   bool _building = true;
 
   AsyncSnapshot? get _snap => widget.dashboardItemController._asyncSnap?.value;
@@ -275,10 +284,9 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
   }
 
   ///
-  void _setNewOffset(ViewportOffset o, BoxConstraints constraints) {
+  _setNewOffset(ViewportOffset o, BoxConstraints constraints, [bool i = true]) {
     /// check slot count
     /// check new constrains equal exists
-
     _layoutController.absorbPointer = widget.absorbPointer;
     _layoutController._viewportDelegate = _ViewportDelegate(
         constraints: constraints,
@@ -334,7 +342,15 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
 
     _offset = o;
 
-    offset.applyViewportDimension(_layoutController._viewportDelegate.constraints.maxHeight);
+    if (i) {
+      offset.applyViewportDimension(
+          _layoutController._viewportDelegate.constraints.maxHeight);
+    }
+
+    if (!i) {
+      offset.applyContentDimensions(0, double.maxFinite);
+      return;
+    }
 
     var maxIndex = (_layoutController._endsTree.lastKey() ?? 0);
 
@@ -359,9 +375,11 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
   late double _maxExtend;
 
   ///
-  final GlobalKey<_DashboardStackState<T>> _stateKey = GlobalKey<_DashboardStackState<T>>();
+  final GlobalKey<_DashboardStackState<T>> _stateKey =
+  GlobalKey<_DashboardStackState<T>>();
 
-  final GlobalKey<ScrollableState> _scrollableKey = GlobalKey<ScrollableState>();
+  final GlobalKey<ScrollableState> _scrollableKey =
+  GlobalKey<ScrollableState>();
 
   bool scrollable = true;
 
@@ -422,7 +440,8 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
       if (_withDelegate) {
         if (_snap!.connectionState == ConnectionState.none) {
           _building = false;
-          return widget.errorPlaceholder?.call(_snap!.error!, _snap!.stackTrace!) ??
+          return widget.errorPlaceholder
+              ?.call(_snap!.error!, _snap!.stackTrace!) ??
               const SizedBox();
         } else if (_snap!.connectionState == ConnectionState.waiting || _reloading) {
           _building = false;
@@ -438,9 +457,12 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
     });
   }
 
+  bool _moving = false;
+
   Widget dashboardWidget(BoxConstraints constrains) {
     return Scrollable(
-        physics: scrollable ? widget.physics : const NeverScrollableScrollPhysics(),
+        physics:
+        scrollable ? widget.physics : const NeverScrollableScrollPhysics(),
         key: _scrollableKey,
         controller: widget.scrollController,
         semanticChildCount: widget.dashboardItemController._items.length,
@@ -456,11 +478,24 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
           return _DashboardStack<T>(
             itemStyle: widget.itemStyle,
             shouldCalculateNewDimensions: () {
+              if (_moving) {
+                return;
+              }
               _setNewOffset(o, constrains);
             },
             onScrollStateChange: (st) {
-              setState(() {
-                scrollable = st;
+
+              SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+                _moving = !st;
+
+                setState(() {
+                  scrollable = st;
+                });
+
+                if (!_moving) {
+                  return;
+                }
+                _setNewOffset(o, constrains, _moving);
               });
             },
             emptyPlaceholder: widget.emptyPlaceholder,
@@ -479,10 +514,9 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
 }
 
 class _ItemCurrentPositionTween extends Tween<ItemCurrentPosition> {
-  _ItemCurrentPositionTween(
-      {required ItemCurrentPosition begin,
-      required ItemCurrentPosition end,
-      required this.onlyDimensions})
+  _ItemCurrentPositionTween({required ItemCurrentPosition begin,
+    required ItemCurrentPosition end,
+    required this.onlyDimensions})
       : super(begin: begin, end: end);
 
   bool onlyDimensions;

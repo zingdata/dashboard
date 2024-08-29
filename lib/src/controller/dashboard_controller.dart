@@ -97,15 +97,15 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// the largest form.
   void addAll(List<T> items, {bool mountToTop = true}) {
     if (_isAttached) {
-      _items.addAll(items.asMap().map((key, value) => MapEntry(value.identifier, value)));
-      _layoutController!.addAll(items);
+      _items.addAll(
+          items.asMap().map((key, value) => MapEntry(value.identifier, value)));
+      _layoutController!.addAll(items, mountToTop: mountToTop);
       itemStorageDelegate?._onItemsAdded(
           items.map((e) => _getItemWithLayout(e.identifier)).toList(),
           _layoutController!.slotCount);
     } else {
       throw Exception("Not Attached");
     }
-    // throw 0;
   }
 
   /// Delete an item from Dashboard.
@@ -333,7 +333,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   }
 
   void _scrollToY(int y, Duration duration, Curve curve) {
-    final lastY = _layouts![_endsTree.lastKey()];
+    final lastY = _layouts![_endsTree[_endsTree.lastKey()]];
 
     if (lastY != null) {
       final lastH = ((lastY.height + lastY.startY) * verticalSlotEdge) -
