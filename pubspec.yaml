@@ -6,11 +6,7 @@ homepage: https://github.com/Mehmetyaz/dashboard
 repository: https://github.com/Mehmetyaz/dashboard
 
 environment:
-<<<<<<< HEAD
-  sdk: ">=2.17.0 <4.0.0"
-=======
   sdk: ">=3.0.0 <4.0.0"
->>>>>>> dashboard-controls
 
 dependencies:
   flutter:
