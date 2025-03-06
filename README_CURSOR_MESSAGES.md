@@ -4,7 +4,7 @@ This feature allows you to display helpful guidance messages to users based on t
 
 ## How It Works
 
-When users hover over or interact with dashboard items, the system automatically detects what type of interaction is possible (move, resize, etc.) and provides a relevant message through a stream.
+When users hover over or interact with dashboard items, the system automatically detects what type of interaction is possible (move, resize, etc.) and provides a relevant message through a high-performance ValueNotifier.
 
 ## Usage Example
 
@@ -71,19 +71,26 @@ The system automatically provides context-appropriate messages for different int
 
 ## Advanced Usage
 
-You can also access the cursor message stream directly from the controller if you want to build your own custom UI:
+You can also access the cursor message notifier directly from the controller if you want to build your own custom UI:
 
 ```dart
-StreamBuilder<String>(
-  stream: controller.cursorMessageStream,
-  builder: (context, snapshot) {
-    final message = snapshot.data ?? '';
-    
+ValueListenableBuilder<String>(
+  valueListenable: controller.cursorMessageNotifier,
+  builder: (context, message, _) {
     // Build your custom UI with the message
     return YourCustomWidget(message: message);
   },
 )
 ```
+
+## Performance Optimizations
+
+The cursor message system is optimized for performance:
+
+1. Uses ValueNotifier instead of streams for direct, synchronous updates
+2. Avoids unnecessary widget rebuilds by only updating when messages actually change
+3. Separates cursor visual updates from message updates to minimize UI redraws
+4. Implements efficient hover detection to reduce garbage collection pressure
 
 ## Custom Messages
 

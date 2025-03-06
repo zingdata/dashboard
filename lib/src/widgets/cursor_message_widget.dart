@@ -31,11 +31,9 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<String>(
-      stream: controller.cursorMessageStream,
-      builder: (context, snapshot) {
-        final message = snapshot.data ?? '';
-        
+    return ValueListenableBuilder<String>(
+      valueListenable: controller.cursorMessageNotifier,
+      builder: (context, message, _) {
         if (message.isEmpty) {
           return emptyWidget ?? const SizedBox.shrink();
         }

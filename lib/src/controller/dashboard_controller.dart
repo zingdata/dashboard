@@ -25,7 +25,7 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
     required List<T> items,
   })  : _items = {},
         itemStorageDelegate = null,
-        _cursorMessageController = StreamController<String>.broadcast() {
+        _cursorMessageNotifier = ValueNotifier<String>('') {
     for (var item in items) {
       _items[item.identifier] = item;
     }
@@ -39,18 +39,18 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// error at the end of the [timout].
   DashboardItemController.withDelegate({Duration? timeout, required this.itemStorageDelegate})
       : _timeout = timeout ?? const Duration(seconds: 10),
-        _cursorMessageController = StreamController<String>.broadcast();
+        _cursorMessageNotifier = ValueNotifier<String>('');
 
-  /// Stream that provides real-time cursor interaction messages for the UI
-  final StreamController<String> _cursorMessageController;
+  /// Notifier that provides real-time cursor interaction messages for the UI
+  final ValueNotifier<String> _cursorMessageNotifier;
   
-  /// Stream that provides real-time cursor interaction messages
+  /// Notifier that provides real-time cursor interaction messages
   /// Use this to display helpful messages in the UI based on what the user is doing
-  Stream<String> get cursorMessageStream => _cursorMessageController.stream;
+  ValueNotifier<String> get cursorMessageNotifier => _cursorMessageNotifier;
 
   @override
   void dispose() {
-    _cursorMessageController.close();
+    _cursorMessageNotifier.dispose();
     super.dispose();
   }
 
@@ -211,9 +211,12 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   void _attach(_DashboardLayoutController layoutController) {
     _layoutController = layoutController;
     
-    // Connect the cursor message callback to the stream
+    // Connect the cursor message callback to the notifier
     _layoutController!.updateCursorMessage = (message) {
-      _cursorMessageController.add(message);
+      // Only update if the message actually changed to avoid unnecessary rebuilds
+      if (_cursorMessageNotifier.value != message) {
+        _cursorMessageNotifier.value = message;
+      }
     };
   }
 

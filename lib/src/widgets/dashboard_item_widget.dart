@@ -99,15 +99,30 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           widget.editModeSettings.resizeCursorSide;
 
   void _hover(PointerHoverEvent hover) {
+    // Get the cursor state without recreating objects to reduce GC pressure
     var newCursorState = _determineCursor(hover.localPosition);
-    if (cursor != newCursorState.cursor) {
-      setState(() {
-        _cursorState = newCursorState;
-        cursor = newCursorState.cursor;
+    
+    // Only update if either cursor or message changed to avoid unnecessary setState calls
+    final cursorChanged = cursor != newCursorState.cursor;
+    final messageChanged = _cursorState.message != newCursorState.message;
+    
+    if (cursorChanged || messageChanged) {
+      // Update cursor state immediately
+      _cursorState = newCursorState;
+      cursor = newCursorState.cursor;
+      
+      // Update cursor message immediately without waiting for next frame
+      widget.layoutController.updateCursorMessage?.call(_cursorState.message);
+      
+      // Only call setState if cursor changed (visual update needed)
+      if (cursorChanged) {
+        setState(() {
+          widget.onCursorUpdate(cursor);
+        });
+      } else {
+        // If only message changed, update cursor without setState
         widget.onCursorUpdate(cursor);
-        // Notify about cursor state change if needed
-        widget.layoutController.updateCursorMessage?.call(_cursorState.message);
-      });
+      }
     }
   }
 
@@ -144,11 +159,23 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
 
   void _exit(PointerExitEvent exit) {
     if (!widget.isDraggingNotifier.value) {
-      setState(() {
-        _cursorState = DashboardCursorState.none;
-        cursor = MouseCursor.defer;
+      // Only update if we're actually changing state
+      final cursorChanged = cursor != MouseCursor.defer;
+      final messageChanged = _cursorState.message.isNotEmpty;
+      
+      _cursorState = DashboardCursorState.none;
+      cursor = MouseCursor.defer;
+      
+      // Update message immediately
+      if (messageChanged) {
         widget.layoutController.updateCursorMessage?.call('');
-      });
+      }
+      
+      // Only call setState if cursor changed
+      if (cursorChanged) {
+        setState(() {});
+      }
+      
       widget.onCursorUpdate(cursor);
     }
   }
