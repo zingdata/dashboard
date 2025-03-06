@@ -4,7 +4,7 @@ part of dashboard;
 /// 
 /// Place this widget in your layout to provide contextual help messages based on
 /// what the user is currently doing with the dashboard items.
-class DashboardCursorMessageWidget extends StatelessWidget {
+class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWidget {
   /// Creates a dashboard cursor message widget.
   ///
   /// The [controller] is required to get the cursor message stream.
@@ -18,7 +18,7 @@ class DashboardCursorMessageWidget extends StatelessWidget {
   }) : super(key: key);
 
   /// The dashboard controller that provides cursor messages.
-  final DashboardItemController controller;
+  final DashboardItemController<T> controller;
   
   /// Optional text style for the message.
   final TextStyle? style;
