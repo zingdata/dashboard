@@ -133,7 +133,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     } else if (b || t) {
       cursor = SystemMouseCursors.resizeUpDown;
     } else {
-      cursor = SystemMouseCursors.move;
+      cursor = SystemMouseCursors.grab;
     }
     return cursor;
   }
