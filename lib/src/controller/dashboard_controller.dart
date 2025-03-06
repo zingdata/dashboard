@@ -24,7 +24,8 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   DashboardItemController({
     required List<T> items,
   })  : _items = {},
-        itemStorageDelegate = null {
+        itemStorageDelegate = null,
+        _cursorMessageController = StreamController<String>.broadcast() {
     for (var item in items) {
       _items[item.identifier] = item;
     }
@@ -37,7 +38,21 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// If the delegate is waiting for a Future to load the items, this will throw
   /// error at the end of the [timout].
   DashboardItemController.withDelegate({Duration? timeout, required this.itemStorageDelegate})
-      : _timeout = timeout ?? const Duration(seconds: 10);
+      : _timeout = timeout ?? const Duration(seconds: 10),
+        _cursorMessageController = StreamController<String>.broadcast();
+
+  /// Stream that provides real-time cursor interaction messages for the UI
+  final StreamController<String> _cursorMessageController;
+  
+  /// Stream that provides real-time cursor interaction messages
+  /// Use this to display helpful messages in the UI based on what the user is doing
+  Stream<String> get cursorMessageStream => _cursorMessageController.stream;
+
+  @override
+  void dispose() {
+    _cursorMessageController.close();
+    super.dispose();
+  }
 
   /// To define [itemStorageDelegate] use [DashboardItemController.withDelegate]
   ///
@@ -195,6 +210,11 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
 
   void _attach(_DashboardLayoutController layoutController) {
     _layoutController = layoutController;
+    
+    // Connect the cursor message callback to the stream
+    _layoutController!.updateCursorMessage = (message) {
+      _cursorMessageController.add(message);
+    };
   }
 
 // bool trySlideToTop(String id) {
@@ -210,6 +230,9 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
 class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   ///
   _DashboardLayoutController();
+
+  /// Callback function to update cursor messages on the frontend
+  Function(String message)? updateCursorMessage;
 
   ///
   late DashboardItemController<T> itemController;

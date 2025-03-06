@@ -26,3 +26,4 @@ part 'widgets/animated_background_painter.dart';
 part 'widgets/dashboard.dart';
 part 'widgets/dashboard_item_widget.dart';
 part 'widgets/dashboard_stack.dart';
+part 'widgets/cursor_message_widget.dart';

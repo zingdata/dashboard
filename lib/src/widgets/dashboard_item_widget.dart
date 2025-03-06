@@ -50,6 +50,7 @@ class _DashboardItemWidget extends StatefulWidget {
 
 class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerProviderStateMixin {
   late MouseCursor cursor;
+  DashboardCursorState _cursorState = DashboardCursorState.none;
 
   // late double leftPad, rightPad, topPad, bottomPad;
 
@@ -70,6 +71,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   @override
   void initState() {
     cursor = MouseCursor.defer;
+    _cursorState = DashboardCursorState.none;
     _animationController =
         AnimationController(vsync: this, duration: widget.editModeSettings.duration);
     _multiplierAnimationController =
@@ -97,51 +99,55 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           widget.editModeSettings.resizeCursorSide;
 
   void _hover(PointerHoverEvent hover) {
-    var newCursor = _determineCursor(hover.localPosition);
-    if (cursor != newCursor) {
+    var newCursorState = _determineCursor(hover.localPosition);
+    if (cursor != newCursorState.cursor) {
       setState(() {
-        cursor = newCursor;
+        _cursorState = newCursorState;
+        cursor = newCursorState.cursor;
         widget.onCursorUpdate(cursor);
+        // Notify about cursor state change if needed
+        widget.layoutController.updateCursorMessage?.call(_cursorState.message);
       });
     }
   }
 
-  MouseCursor _determineCursor(Offset localPosition) {
+  DashboardCursorState _determineCursor(Offset localPosition) {
     var x = localPosition.dx;
     var y = localPosition.dy;
-    MouseCursor cursor;
     var r = onRightSide(x);
     var l = onLeftSide(x);
     var t = onTopSide(y);
     var b = onBottomSide(y);
+    
     if (r) {
       if (b) {
-        cursor = SystemMouseCursors.resizeUpLeftDownRight;
+        return DashboardCursorState.resizeTopLeft;
       } else if (t) {
-        cursor = SystemMouseCursors.resizeUpRightDownLeft;
+        return DashboardCursorState.resizeTopRight;
       } else {
-        cursor = SystemMouseCursors.resizeLeftRight;
+        return DashboardCursorState.resizeHorizontal;
       }
     } else if (l) {
       if (b) {
-        cursor = SystemMouseCursors.resizeUpRightDownLeft;
+        return DashboardCursorState.resizeTopRight;
       } else if (t) {
-        cursor = SystemMouseCursors.resizeUpLeftDownRight;
+        return DashboardCursorState.resizeTopLeft;
       } else {
-        cursor = SystemMouseCursors.resizeLeftRight;
+        return DashboardCursorState.resizeHorizontal;
       }
     } else if (b || t) {
-      cursor = SystemMouseCursors.resizeUpDown;
+      return DashboardCursorState.resizeVertical;
     } else {
-      cursor = SystemMouseCursors.grab;
+      return DashboardCursorState.grab;
     }
-    return cursor;
   }
 
   void _exit(PointerExitEvent exit) {
     if (!widget.isDraggingNotifier.value) {
       setState(() {
+        _cursorState = DashboardCursorState.none;
         cursor = MouseCursor.defer;
+        widget.layoutController.updateCursorMessage?.call('');
       });
       widget.onCursorUpdate(cursor);
     }

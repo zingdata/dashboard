@@ -115,3 +115,68 @@ class ItemStyle {
   /// Must be null if [type] is [MaterialType.circle].
   final BorderRadiusGeometry? borderRadius;
 }
+
+// Add this class to hold cursor state and associated message
+class DashboardCursorState {
+  final MouseCursor cursor;
+  final String message;
+
+  const DashboardCursorState(this.cursor, this.message);
+
+  // Common cursor states with descriptive messages
+  static const DashboardCursorState grab = DashboardCursorState(
+    SystemMouseCursors.grab,
+    'Click and drag to move item',
+  );
+  
+  static const DashboardCursorState grabbing = DashboardCursorState(
+    SystemMouseCursors.grabbing,
+    'Dragging item - release to place',
+  );
+  
+  static const DashboardCursorState resizeHorizontal = DashboardCursorState(
+    SystemMouseCursors.resizeLeftRight,
+    'Drag to resize horizontally',
+  );
+  
+  static const DashboardCursorState resizeVertical = DashboardCursorState(
+    SystemMouseCursors.resizeUpDown,
+    'Drag to resize vertically',
+  );
+  
+  static const DashboardCursorState resizeTopRight = DashboardCursorState(
+    SystemMouseCursors.resizeUpRightDownLeft,
+    'Drag to resize diagonally',
+  );
+  
+  static const DashboardCursorState resizeTopLeft = DashboardCursorState(
+    SystemMouseCursors.resizeUpLeftDownRight,
+    'Drag to resize diagonally',
+  );
+  
+  static const DashboardCursorState none = DashboardCursorState(
+    MouseCursor.defer,
+    '',
+  );
+  
+  // Additional states for more specific guidance
+  static const DashboardCursorState hover = DashboardCursorState(
+    SystemMouseCursors.click,
+    'Click to select item',
+  );
+  
+  static const DashboardCursorState delete = DashboardCursorState(
+    SystemMouseCursors.disappearing,
+    'Item will be deleted',
+  );
+  
+  static const DashboardCursorState locked = DashboardCursorState(
+    SystemMouseCursors.forbidden,
+    'Item is locked and cannot be moved',
+  );
+  
+  static const DashboardCursorState edit = DashboardCursorState(
+    SystemMouseCursors.text,
+    'Click to edit content',
+  );
+}
