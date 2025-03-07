@@ -230,6 +230,10 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   bool onAnimation = false;
   DateTime? animationStart;
 
+  // Tracking for mobile pointer handling
+  Offset? _initialPointerPosition;
+  bool _isDraggingOnMobile = false;
+
   @override
   Widget build(BuildContext context) {
     Widget result = widget.child;
@@ -239,8 +243,41 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
         result = AbsorbPointer(child: result);
       }
 
-      // Use a platform-aware approach for cursor/touch interactions
-      result = _buildInteractiveWrapper(result, context);
+      // Determine if we're on a mobile device
+      final bool isMobile = _isMobileDevice();
+      
+      // Handle mouse interactions on desktop
+      if (!isMobile) {
+        result = MouseRegion(
+          cursor: cursor,
+          onHover: _hover,
+          onExit: _exit,
+          child: result,
+        );
+      } else {
+        // On mobile, use a stack to place a completely transparent listener on top
+        // that only observes events without interfering with anything
+        result = Stack(
+          children: [
+            // The actual widget content that receives all interactions
+            result,
+            // Completely transparent observer for displaying messages
+            Positioned.fill(
+              child: IgnorePointer(
+                // IgnorePointer ensures ALL events pass through to widgets below
+                child: Listener(
+                  onPointerDown: _handleMobilePointerDown,
+                  onPointerMove: _handleMobilePointerMove,
+                  onPointerUp: _handleMobilePointerUp,
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }
     }
 
     var currentEdit =
@@ -354,40 +391,6 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     );
   }
 
-  // Build the appropriate interactive wrapper based on platform
-  Widget _buildInteractiveWrapper(Widget child, BuildContext context) {
-    final bool isMobile = _isMobileDevice();
-    
-    // Always add gesture detector for touch interactions
-    // Widget result = GestureDetector(
-    //   onTapDown: _handleTapDown,
-    //   onTapUp: _handleTapUp,
-    //   onLongPress: _handleLongPress,
-    //   onLongPressEnd: _handleLongPressEnd,
-    //   // Add pan gesture support for mobile dragging with a minimum drag distance threshold
-    //   onPanStart: _handlePanStart,
-    //   onPanUpdate: _handlePanUpdate,
-    //   onPanEnd: _handlePanEnd,
-    //   // Change from opaque to deferToChild to allow events to reach children
-    //   behavior: HitTestBehavior.deferToChild,
-    //   // Add drag threshold to differentiate between normal taps and drags
-    //   dragStartBehavior: DragStartBehavior.down,
-    //   child: child,
-    // );
-    
-    // Add MouseRegion only on desktop platforms
-  //  if (!isMobile) {
-    final  result = MouseRegion(
-        cursor: cursor,
-        onHover: _hover,
-        onExit: _exit,
-        child: child,
-      );
-    //}
-    
-    return result;
-  }
-
   // Helper method to detect if we're on a mobile device
   bool _isMobileDevice() {
     try {
@@ -400,145 +403,61 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     }
   }
 
-  // Mobile touch handlers
-  void _handleTapDown(TapDownDetails details) {
-    // Only process in edit mode
+  // Simple mobile pointer handlers that only show messages without interfering with drag functionality
+  void _handleMobilePointerDown(PointerDownEvent event) {
     if (!widget.layoutController.isEditing) return;
     
-    final tapPosition = details.localPosition;
-    var desktopCursorState = _determineCursor(tapPosition);
+    _initialPointerPosition = event.localPosition;
+    _isDraggingOnMobile = false;
     
-    // Get the mobile-friendly version of the cursor state
-    var mobileCursorState = DashboardCursorState.getMobileVersion(desktopCursorState);
+    final touchPosition = event.localPosition;
     
-    // Update cursor state and message for this interaction
-    _cursorState = mobileCursorState;
-    widget.layoutController.updateCursorMessage?.call(mobileCursorState.message);
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    // Only process in edit mode
-    if (!widget.layoutController.isEditing) return;
-    
-    // Clear message when tap is released without long press
-    widget.layoutController.updateCursorMessage?.call('');
-  }
-
-  void _handleLongPress() {
-    // Only process in edit mode
-    if (!widget.layoutController.isEditing) return;
-    
-    // Provide haptic feedback when long pressing on mobile
-    if (_isMobileDevice()) {
-      HapticFeedback.mediumImpact();
-    }
-    
-    // While holding, show active message
-    if (_cursorState == DashboardCursorState.mobileDrag) {
-      widget.layoutController.updateCursorMessage?.call("Drag to move item");
-    } else if (_cursorState == DashboardCursorState.mobileResize) {
-      widget.layoutController.updateCursorMessage?.call("Drag to resize");
+    // Get a mobile-friendly message
+    String message = "";
+    if (onRightSide(touchPosition.dx) || onLeftSide(touchPosition.dx) || 
+        onTopSide(touchPosition.dy) || onBottomSide(touchPosition.dy)) {
+      message = "Touch and drag to resize";
     } else {
-      widget.layoutController.updateCursorMessage?.call("Tap and hold to interact");
-    }
-  }
-
-  void _handleLongPressEnd(LongPressEndDetails details) {
-    // Only process in edit mode
-    if (!widget.layoutController.isEditing) return;
-    
-    // Clear message when long press ends
-    widget.layoutController.updateCursorMessage?.call('');
-  }
-
-  // Mobile pan gesture handlers for drag/resize operations
-  DashboardCursorState? _activeTouchState;
-  Offset? _touchStartPosition;
-
-  void _handlePanStart(DragStartDetails details) {
-    // Only process in edit mode
-    if (!widget.layoutController.isEditing) return;
-    
-    final touchPosition = details.localPosition;
-    // First get the desktop cursor state that would apply at this position
-    var desktopCursorState = _determineCursor(touchPosition);
-    // Convert to the appropriate mobile cursor state
-    _activeTouchState = DashboardCursorState.getMobileVersion(desktopCursorState);
-    _touchStartPosition = touchPosition;
-    
-    // Provide haptic feedback when starting a drag on mobile
-    if (_isMobileDevice()) {
-      HapticFeedback.lightImpact();
+      message = "Touch and drag to move";
     }
     
-    // Show active dragging message
-    widget.layoutController.updateCursorMessage?.call(_activeTouchState!.message);
-    
-    // Start drag or resize operation based on where the user touched
-    if (_activeTouchState == DashboardCursorState.mobileDrag) {
-      // Handle drag start for moving items
-      widget.isDraggingNotifier.value = true;
-      
-      // Start the edit session for this item
-      widget.layoutController.startEdit(widget.id, true);
-      
-      // Initialize transform for dragging
-      transform = Offset.zero;
-      panStart = details.localPosition;
-      scrollOffset = widget.offset.pixels;
-      startScrollOffset = scrollOffset;
-    } else if (_activeTouchState == DashboardCursorState.mobileResize) {
-      // Handle resize start
-      widget.isDraggingNotifier.value = true;
-      
-      // Start the edit session for this item
-      widget.layoutController.startEdit(widget.id, false);
-      
-      // Initialize for resizing
-      panStart = details.localPosition;
-    }
+    // Show the message
+    widget.layoutController.updateCursorMessage?.call(message);
   }
-
-  void _handlePanUpdate(DragUpdateDetails details) {
-    // Only process in edit mode
+  
+  void _handleMobilePointerMove(PointerMoveEvent event) {
     if (!widget.layoutController.isEditing) return;
     
-    // Only process if we have active touch state and panStart
-    if (_activeTouchState != null && panStart != null) {
-      // Calculate the drag distance
-      final dragDistance = (details.localPosition - panStart!).distance;
+    if (_initialPointerPosition != null) {
+      // Check if we've moved enough to consider it a drag
+      final dragDistance = (event.localPosition - _initialPointerPosition!).distance;
       
-      // Only consider it a drag if moved more than 5 pixels
-      if (dragDistance > 5.0) {
-        // For dragging operations, show a more specific message during the active drag
-        if (_activeTouchState == DashboardCursorState.mobileDrag) {
-          widget.layoutController.updateCursorMessage?.call("Dragging item - release to place");
-        } else if (_activeTouchState == DashboardCursorState.mobileResize) {
+      if (dragDistance > 10.0) {
+        _isDraggingOnMobile = true;
+      }
+      
+      if (_isDraggingOnMobile) {
+        final touchPosition = _initialPointerPosition!; // Use initial position to determine action
+        
+        // Show active dragging message
+        if (onRightSide(touchPosition.dx) || onLeftSide(touchPosition.dx) || 
+            onTopSide(touchPosition.dy) || onBottomSide(touchPosition.dy)) {
           widget.layoutController.updateCursorMessage?.call("Resizing - release when done");
+        } else {
+          widget.layoutController.updateCursorMessage?.call("Dragging item - release to place");
         }
       }
     }
   }
-
-  void _handlePanEnd(DragEndDetails details) {
-    // Only process in edit mode
+  
+  void _handleMobilePointerUp(PointerUpEvent event) {
     if (!widget.layoutController.isEditing) return;
     
-    // Provide haptic feedback when ending a drag on mobile
-    if (_isMobileDevice()) {
-      HapticFeedback.lightImpact();
-    }
+    // Reset tracking state
+    _initialPointerPosition = null;
+    _isDraggingOnMobile = false;
     
-    // Reset touch state
-    _activeTouchState = null;
-    _touchStartPosition = null;
-    panStart = null;
-    transform = Offset.zero;
-    
-    // Clear message when drag ends
+    // Clear the message
     widget.layoutController.updateCursorMessage?.call('');
-    
-    // End the drag/resize operation
-    widget.isDraggingNotifier.value = false;
   }
 }
