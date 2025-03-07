@@ -275,7 +275,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
           
           // Clear message after short delay
           Future.delayed(const Duration(seconds: 2), () {
-            widget.dashboardController.updateCursorMessage?.call('');
+            if (!isDraggingNotifier.value) {
+              widget.dashboardController.updateCursorMessage?.call('');
+            }
           });
         },
         onPanStart: widget.editModeSettings.panEnabled
@@ -372,7 +374,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                 isDraggingNotifier.value = false;
               }
             : null,
-        onLongPressStart: widget.editModeSettings.longPressEnabled
+        // Use long press only for mobile platforms
+        onLongPressStart: widget.editModeSettings.longPressEnabled && _isMobilePlatform(context)
             ? (longPressStart) {
                 _onMoveStart(longPressStart.localPosition);
                 
@@ -405,7 +408,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                 isDraggingNotifier.value = true;
               }
             : null,
-        onLongPressMoveUpdate: widget.editModeSettings.longPressEnabled
+        onLongPressMoveUpdate: widget.editModeSettings.longPressEnabled && _isMobilePlatform(context)
             ? (u) {
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
@@ -431,7 +434,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                 }
               }
             : null,
-        onLongPressEnd: widget.editModeSettings.longPressEnabled
+        onLongPressEnd: widget.editModeSettings.longPressEnabled && _isMobilePlatform(context)
             ? (e) {
                 _onMoveEnd();
                 

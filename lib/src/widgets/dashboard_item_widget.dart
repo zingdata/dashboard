@@ -263,6 +263,8 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   Offset? _touchStartPosition;
   DashboardCursorState _currentCursorState = DashboardCursorState.none;
 
+  Offset? _lastPointerPosition;
+
   @override
   Widget build(BuildContext context) {
     Widget result = widget.child;
@@ -272,10 +274,53 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
         result = AbsorbPointer(child: result);
       }
       
-      // Wrap with GestureDetector for mobile/touch devices to handle resize operations
+      // Wrap with GestureDetector for both web and mobile interactions
       result = GestureDetector(
+        // Single tap handling - optimized for web interactions
+        onTap: !_isMobilePlatform(context) ? () {
+          // Web platforms should support single click to select
+          final localPosition = _lastPointerPosition;
+          if (localPosition == null) return;
+          
+          // Check edges to determine if this is resize or move
+          final r = onRightSide(localPosition.dx);
+          final l = onLeftSide(localPosition.dx);
+          final t = onTopSide(localPosition.dy);
+          final b = onBottomSide(localPosition.dy);
+          
+          String message;
+          if (r || l || t || b) {
+            // Clicking on edge - show selected for resize
+            String direction = "";
+            if (r || l) direction += "horizontally";
+            if (t || b) {
+              if (direction.isNotEmpty) {
+                direction = "diagonally";
+              } else {
+                direction = "vertically";
+              }
+            }
+            message = "Item selected - click and drag to resize $direction";
+          } else {
+            // Clicking in center - show selected for move
+            message = "Item selected - click and drag to move";
+          }
+          
+          widget.layoutController.updateCursorMessage?.call(message);
+          
+          // Clear message after a delay if no further interaction
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (!widget.isDraggingNotifier.value) {
+              widget.layoutController.updateCursorMessage?.call('');
+            }
+          });
+        } : null,
+        
         // Mobile-specific feedback for touch devices
         onTapDown: (details) {
+          // Store position for later use
+          _lastPointerPosition = details.localPosition;
+          
           // Check where the user tapped to provide appropriate guidance
           final localPosition = details.localPosition;
           final cursorState = _determineCursor(localPosition);
@@ -301,7 +346,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
             }
             
             message = _isMobilePlatform(context)
-              ? "Tap and drag to resize $direction"
+              ? "Tap and hold to resize $direction"
               : "Click and drag to resize $direction";
           } else {
             // Tapping in the center of the item
@@ -321,7 +366,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
             }
           });
         },
-        // Handle pan gestures specifically for resize on mobile
+        // Handle pan gestures for both web and mobile resize/move
         onPanStart: (details) {
           final localPosition = details.localPosition;
           final cursorState = _determineCursor(localPosition);
@@ -409,6 +454,71 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
             });
           }
         },
+        // Long press only needed for mobile devices
+        onLongPressStart: _isMobilePlatform(context) ? (details) {
+          // Similar to onPanStart but specifically for mobile long press
+          final localPosition = details.localPosition;
+          final cursorState = _determineCursor(localPosition);
+          
+          // Store position for tracking
+          _touchStartPosition = localPosition;
+          _currentCursorState = cursorState;
+          
+          // Determine action based on edge detection
+          final r = onRightSide(localPosition.dx);
+          final l = onLeftSide(localPosition.dx);
+          final t = onTopSide(localPosition.dy);
+          final b = onBottomSide(localPosition.dy);
+          
+          String message;
+          if (r || l || t || b) {
+            // Touching an edge - handle resize
+            String direction = "";
+            if (r || l) direction += "horizontally";
+            if (t || b) {
+              if (direction.isNotEmpty) {
+                direction = "diagonally";
+              } else {
+                direction = "vertically";
+              }
+            }
+            
+            message = "Starting resize $direction";
+            widget.layoutController.startEdit(widget.id, false);
+          } else {
+            // Touching center - handle move
+            message = "Starting move - drag to position";
+            widget.layoutController.startEdit(widget.id, true);
+          }
+          
+          widget.isDraggingNotifier.value = true;
+          widget.layoutController.updateCursorMessage?.call(message);
+        } : null,
+        onLongPressMoveUpdate: _isMobilePlatform(context) ? (details) {
+          if (_touchStartPosition == null || !widget.isDraggingNotifier.value) return;
+          
+          // Show live dimensions during resize operations
+          final currentEdit = widget.layoutController.editSession?.editing.id == widget.itemCurrentLayout.id;
+          
+          if (currentEdit && widget.layoutController.editSession?.editing._originSize != null) {
+            final width = widget.itemCurrentLayout.width;
+            final height = widget.itemCurrentLayout.height; 
+            widget.layoutController.updateCursorMessage?.call("Size: ${width}x${height}");
+          }
+        } : null,
+        onLongPressEnd: _isMobilePlatform(context) ? (details) {
+          _touchStartPosition = null;
+          
+          if (widget.isDraggingNotifier.value) {
+            widget.layoutController.saveEditSession();
+            widget.isDraggingNotifier.value = false;
+            
+            widget.layoutController.updateCursorMessage?.call("Operation complete");
+            Future.delayed(const Duration(milliseconds: 800), () {
+              widget.layoutController.updateCursorMessage?.call('');
+            });
+          }
+        } : null,
         child: MouseRegion(
           cursor: cursor,
           onHover: _hover,
