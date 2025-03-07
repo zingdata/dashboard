@@ -433,9 +433,49 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           // Ensure we're in dragging mode
           widget.isDraggingNotifier.value = true;
           
-          // For lengthy operations, provide current dimensions when possible
+          // Get current edit session
           final currentEdit = widget.layoutController.editSession?.editing.id == widget.itemCurrentLayout.id;
           
+          if (currentEdit) {
+            // For resize operations
+            final r = onRightSide(_touchStartPosition!.dx);
+            final l = onLeftSide(_touchStartPosition!.dx);
+            final t = onTopSide(_touchStartPosition!.dy);
+            final b = onBottomSide(_touchStartPosition!.dy);
+            final isResizeOperation = r || l || t || b;
+            
+            if (isResizeOperation) {
+              // Handle resize through _resizeMove
+              // Gather the directions being resized
+              List<AxisDirection> directions = [];
+              if (r) directions.add(AxisDirection.right);
+              if (l) directions.add(AxisDirection.left);
+              if (t) directions.add(AxisDirection.up);
+              if (b) directions.add(AxisDirection.down);
+              
+              // Call _resizeMove with the directions and local position
+              widget.itemCurrentLayout._resizeMove(
+                holdDirections: directions,
+                local: details.localPosition,
+                start: _touchStartPosition!,
+                scrollDifference: 0, // No scroll difference for direct item interactions
+                onChange: (id) {
+                  // Callback for when an item changes - will be handled by the controller
+                },
+              );
+            } else {
+              // Handle move through transform
+              final deltaX = details.localPosition.dx - _touchStartPosition!.dx;
+              final deltaY = details.localPosition.dy - _touchStartPosition!.dy;
+              
+              // For transform operations, update the position directly
+              if (widget.itemCurrentLayout._transform != null) {
+                widget.itemCurrentLayout._transform!.value = Offset(deltaX, deltaY);
+              }
+            }
+          }
+          
+          // For lengthy operations, provide current dimensions when possible
           if (currentEdit && widget.layoutController.editSession?.editing._originSize != null) {
             final width = widget.itemCurrentLayout.width;
             final height = widget.itemCurrentLayout.height; 
@@ -510,9 +550,49 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           // Ensure we're in dragging mode
           widget.isDraggingNotifier.value = true;
           
-          // Show live dimensions during resize operations
+          // Get current edit session
           final currentEdit = widget.layoutController.editSession?.editing.id == widget.itemCurrentLayout.id;
           
+          if (currentEdit) {
+            // For resize operations
+            final r = onRightSide(_touchStartPosition!.dx);
+            final l = onLeftSide(_touchStartPosition!.dx);
+            final t = onTopSide(_touchStartPosition!.dy);
+            final b = onBottomSide(_touchStartPosition!.dy);
+            final isResizeOperation = r || l || t || b;
+            
+            if (isResizeOperation) {
+              // Handle resize through _resizeMove
+              // Gather the directions being resized
+              List<AxisDirection> directions = [];
+              if (r) directions.add(AxisDirection.right);
+              if (l) directions.add(AxisDirection.left);
+              if (t) directions.add(AxisDirection.up);
+              if (b) directions.add(AxisDirection.down);
+              
+              // Call _resizeMove with the directions and local position
+              widget.itemCurrentLayout._resizeMove(
+                holdDirections: directions,
+                local: details.localPosition,
+                start: _touchStartPosition!,
+                scrollDifference: 0, // No scroll difference for direct item interactions
+                onChange: (id) {
+                  // Callback for when an item changes - will be handled by the controller
+                },
+              );
+            } else {
+              // Handle move through transform
+              final deltaX = details.localPosition.dx - _touchStartPosition!.dx;
+              final deltaY = details.localPosition.dy - _touchStartPosition!.dy;
+              
+              // For transform operations, update the position directly
+              if (widget.itemCurrentLayout._transform != null) {
+                widget.itemCurrentLayout._transform!.value = Offset(deltaX, deltaY);
+              }
+            }
+          }
+          
+          // Show live dimensions during resize operations
           if (currentEdit && widget.layoutController.editSession?.editing._originSize != null) {
             final width = widget.itemCurrentLayout.width;
             final height = widget.itemCurrentLayout.height; 
