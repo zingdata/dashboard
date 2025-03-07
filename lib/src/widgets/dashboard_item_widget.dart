@@ -230,9 +230,8 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   bool onAnimation = false;
   DateTime? animationStart;
 
-  // Tracking for mobile pointer handling
-  Offset? _initialPointerPosition;
-  bool _isDraggingOnMobile = false;
+  Offset? _touchStartPosition;
+  DashboardCursorState _currentCursorState = DashboardCursorState.none;
 
   @override
   Widget build(BuildContext context) {
@@ -242,42 +241,94 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       if (widget.layoutController.absorbPointer) {
         result = AbsorbPointer(child: result);
       }
-
-      // Determine if we're on a mobile device
-      final bool isMobile = _isMobileDevice();
       
-      // Handle mouse interactions on desktop
-      if (!isMobile) {
-        result = MouseRegion(
+      // Wrap with GestureDetector for mobile/touch devices to handle resize operations
+      result = GestureDetector(
+        // Mobile-specific feedback for touch devices
+        onTapDown: (details) {
+          // Check where the user tapped to provide appropriate guidance
+          final localPosition = details.localPosition;
+          final cursorState = _determineCursor(localPosition);
+          
+          // Update message based on where user tapped
+          widget.layoutController.updateCursorMessage?.call(cursorState.message);
+        },
+        onTapUp: (details) {
+          // Clear message when tap is released without dragging
+          widget.layoutController.updateCursorMessage?.call('');
+        },
+        // Handle pan gestures specifically for resize on mobile
+        onPanStart: (details) {
+          final localPosition = details.localPosition;
+          final cursorState = _determineCursor(localPosition);
+          
+          // Store the initial touch position and cursor state for tracking resize direction
+          _touchStartPosition = localPosition;
+          _currentCursorState = cursorState;
+          
+          // Update cursor message for resize operation
+          widget.layoutController.updateCursorMessage?.call(cursorState.message);
+          
+          // For resize operations, start the edit session
+          final r = onRightSide(localPosition.dx);
+          final l = onLeftSide(localPosition.dx);
+          final t = onTopSide(localPosition.dy);
+          final b = onBottomSide(localPosition.dy);
+          
+          // Only start resize if touching an edge
+          if (r || l || t || b) {
+            // Flag as dragging
+            widget.isDraggingNotifier.value = true;
+            
+            // Start edit session for resize (not transform)
+            widget.layoutController.startEdit(widget.id, false);
+          }
+        },
+        onPanUpdate: (details) {
+          // Skip if we didn't detect an edge touch on start
+          if (_touchStartPosition == null || !widget.isDraggingNotifier.value) return;
+          
+          // Update message periodically during resize to provide feedback
+          widget.layoutController.updateCursorMessage?.call(_currentCursorState.message);
+        },
+        onPanEnd: (details) {
+          // Clear resize state and message
+          _touchStartPosition = null;
+          
+          if (widget.isDraggingNotifier.value) {
+            // Save the edit session if we were dragging
+            widget.layoutController.saveEditSession();
+            widget.isDraggingNotifier.value = false;
+            
+            // Provide confirmation message
+            widget.layoutController.updateCursorMessage?.call("Resize complete");
+            
+            // Clear after brief delay
+            Future.delayed(const Duration(milliseconds: 500), () {
+              widget.layoutController.updateCursorMessage?.call('');
+            });
+          }
+        },
+        child: MouseRegion(
           cursor: cursor,
           onHover: _hover,
           onExit: _exit,
           child: result,
-        );
-      } else {
-        // On mobile, use a stack to place a completely transparent listener on top
-        // that only observes events without interfering with anything
-        result = Stack(
-          children: [
-            // The actual widget content that receives all interactions
-            result,
-            // Completely transparent observer for displaying messages
-            Positioned.fill(
-              child: IgnorePointer(
-                // IgnorePointer ensures ALL events pass through to widgets below
-                child: Listener(
-                  onPointerDown: _handleMobilePointerDown,
-                  onPointerMove: _handleMobilePointerMove,
-                  onPointerUp: _handleMobilePointerUp,
-                  child: Container(
-                    color: Colors.transparent,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      }
+        ),
+      );
+    } else {
+      // Even in non-edit mode, add basic touch feedback for mobile
+      result = GestureDetector(
+        onTap: () {
+          // Simple informational message on tap when not in edit mode
+          widget.layoutController.updateCursorMessage?.call("Enter edit mode to resize or move");
+          // Clear after brief delay
+          Future.delayed(const Duration(seconds: 1), () {
+            widget.layoutController.updateCursorMessage?.call('');
+          });
+        },
+        child: result,
+      );
     }
 
     var currentEdit =
@@ -389,75 +440,5 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
         );
       },
     );
-  }
-
-  // Helper method to detect if we're on a mobile device
-  bool _isMobileDevice() {
-    try {
-      // In web or when dart:io is available
-      return defaultTargetPlatform == TargetPlatform.iOS || 
-             defaultTargetPlatform == TargetPlatform.android;
-    } catch (e) {
-      // Fall back to a simpler check if TargetPlatform isn't available
-      return false;
-    }
-  }
-
-  // Simple mobile pointer handlers that only show messages without interfering with drag functionality
-  void _handleMobilePointerDown(PointerDownEvent event) {
-    if (!widget.layoutController.isEditing) return;
-    
-    _initialPointerPosition = event.localPosition;
-    _isDraggingOnMobile = false;
-    
-    final touchPosition = event.localPosition;
-    
-    // Get a mobile-friendly message
-    String message = "";
-    if (onRightSide(touchPosition.dx) || onLeftSide(touchPosition.dx) || 
-        onTopSide(touchPosition.dy) || onBottomSide(touchPosition.dy)) {
-      message = "Touch and drag to resize";
-    } else {
-      message = "Touch and drag to move";
-    }
-    
-    // Show the message
-    widget.layoutController.updateCursorMessage?.call(message);
-  }
-  
-  void _handleMobilePointerMove(PointerMoveEvent event) {
-    if (!widget.layoutController.isEditing) return;
-    
-    if (_initialPointerPosition != null) {
-      // Check if we've moved enough to consider it a drag
-      final dragDistance = (event.localPosition - _initialPointerPosition!).distance;
-      
-      if (dragDistance > 10.0) {
-        _isDraggingOnMobile = true;
-      }
-      
-      if (_isDraggingOnMobile) {
-        final touchPosition = _initialPointerPosition!; // Use initial position to determine action
-        
-        // Show active dragging message
-        if (onRightSide(touchPosition.dx) || onLeftSide(touchPosition.dx) || 
-            onTopSide(touchPosition.dy) || onBottomSide(touchPosition.dy)) {
-          widget.layoutController.updateCursorMessage?.call("Resizing - release when done");
-        } else {
-          widget.layoutController.updateCursorMessage?.call("Dragging item - release to place");
-        }
-      }
-    }
-  }
-  
-  void _handleMobilePointerUp(PointerUpEvent event) {
-    if (!widget.layoutController.isEditing) return;
-    
-    // Reset tracking state
-    _initialPointerPosition = null;
-    _isDraggingOnMobile = false;
-    
-    // Clear the message
-    widget.layoutController.updateCursorMessage?.call('');
   }
 }

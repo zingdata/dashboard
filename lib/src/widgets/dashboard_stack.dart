@@ -267,35 +267,66 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         onPanStart: widget.editModeSettings.panEnabled
             ? (panStart) {
                 _onMoveStart(panStart.localPosition);
+                // Update cursor message to indicate dragging on mobile
+                widget.dashboardController.updateCursorMessage?.call(DashboardCursorState.grabbing.message);
+                isDraggingNotifier.value = true;
               }
             : null,
         onPanUpdate: widget.editModeSettings.panEnabled
             ? (u) {
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
+                // Keep cursor message updated during drag if needed
+                if (!isDraggingNotifier.value) {
+                  isDraggingNotifier.value = true;
+                  widget.dashboardController.updateCursorMessage?.call(DashboardCursorState.grabbing.message);
+                }
               }
             : null,
         onPanEnd: widget.editModeSettings.panEnabled
             ? (e) {
                 _onMoveEnd();
+                // Clear dragging message when finished
+                widget.dashboardController.updateCursorMessage?.call('');
+                isDraggingNotifier.value = false;
               }
             : null,
         onLongPressStart: widget.editModeSettings.longPressEnabled
             ? (longPressStart) {
                 _onMoveStart(longPressStart.localPosition);
+                // Show selection message for long press
+                widget.dashboardController.updateCursorMessage?.call("Item selected - drag to move");
+                isDraggingNotifier.value = true;
               }
             : null,
         onLongPressMoveUpdate: widget.editModeSettings.longPressEnabled
             ? (u) {
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
+                // Keep cursor message updated during long press drag
+                if (!isDraggingNotifier.value) {
+                  isDraggingNotifier.value = true;
+                  widget.dashboardController.updateCursorMessage?.call(DashboardCursorState.grabbing.message);
+                }
               }
             : null,
         onLongPressEnd: widget.editModeSettings.longPressEnabled
             ? (e) {
                 _onMoveEnd();
+                // Clear message when done with long press
+                widget.dashboardController.updateCursorMessage?.call('');
+                isDraggingNotifier.value = false;
               }
             : null,
+        // Add tap handling for mobile interface feedback
+        onTap: widget.dashboardController.isEditing ? () {
+          // Show brief tap message
+          widget.dashboardController.updateCursorMessage?.call("Tap and hold to move item");
+          // Clear message after a short delay
+          Future.delayed(const Duration(seconds: 1), () {
+            widget.dashboardController.updateCursorMessage?.call('');
+          });
+        } : null,
         child: result,
       );
     }

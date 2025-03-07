@@ -179,34 +179,30 @@ class DashboardCursorState {
     SystemMouseCursors.text,
     'Click to edit content',
   );
-  
-  // Mobile-specific touch states
-  static const DashboardCursorState mobileTouch = DashboardCursorState(
-    MouseCursor.defer,
-    'Tap and hold to interact',
+
+  // Mobile-specific states with touch-oriented messages
+  static const DashboardCursorState mobileGrab = DashboardCursorState(
+    SystemMouseCursors.grab, 
+    'Touch and hold to move item'
   );
   
-  static const DashboardCursorState mobileDrag = DashboardCursorState(
-    MouseCursor.defer,
-    'Drag to move item',
+  static const DashboardCursorState mobileGrabbing = DashboardCursorState(
+    SystemMouseCursors.grabbing,
+    'Moving item - lift finger to place'
   );
   
   static const DashboardCursorState mobileResize = DashboardCursorState(
-    MouseCursor.defer,
-    'Drag to resize',
+    SystemMouseCursors.resizeLeftRight,
+    'Touch edge and drag to resize'
   );
   
-  // Helper method to get mobile-friendly version of a cursor state
-  static DashboardCursorState getMobileVersion(DashboardCursorState desktopState) {
-    if (desktopState == grab) {
-      return mobileDrag;
-    } else if (desktopState == resizeHorizontal || 
-               desktopState == resizeVertical ||
-               desktopState == resizeTopLeft ||
-               desktopState == resizeTopRight) {
-      return mobileResize;
-    } else {
-      return mobileTouch;
-    }
-  }
+  static const DashboardCursorState mobileTap = DashboardCursorState(
+    SystemMouseCursors.click,
+    'Tap to select, double-tap to edit'
+  );
+  
+  static const DashboardCursorState mobileCorner = DashboardCursorState(
+    SystemMouseCursors.resizeUpLeftDownRight,
+    'Drag corner to resize in both directions'
+  );
 }
