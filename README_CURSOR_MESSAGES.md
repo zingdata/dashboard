@@ -8,7 +8,7 @@ When users interact with dashboard items (hover, touch, drag, etc.), the system 
 
 1. Detects the type of interaction (move, resize, etc.)
 2. Identifies the specific edge or region being interacted with
-3. Determines the platform (web/mobile) to provide appropriate terminology and interaction model
+3. Determines the platform (web/mobile) to provide appropriate terminology
 4. Delivers real-time guidance through a high-performance ValueNotifier
 
 ## Usage Example
@@ -90,39 +90,31 @@ Mobile/Touch:
 - "Tap and hold to move item"
 - "Touch edge and drag to resize"
 
-## Platform-Optimized Interaction Models
+## Unified Web & Mobile Experience
 
-The system automatically adapts its interaction model based on the detected platform:
+The system automatically adapts to provide consistent guidance across platforms:
 
-### Web/Desktop Interactions (Mouse-Centric)
-- **Single-click selection**: Clicking items or their edges immediately selects them for operations
-- **Hover feedback**: Shows available actions when mouse hovers over items
-- **Click and drag**: Performs move/resize operations with direct click and drag
-- **Cursors**: Shows appropriate system cursors for different operations
+### Web/Desktop Interactions
+- Hover feedback shows available actions
+- Single-click selection and dragging
+- Live resizing with dimension feedback
+- Precise edge detection for resize operations
 
-### Mobile/Touch Interactions (Touch-Centric)
-- **Tap feedback**: Shows available actions on tap with appropriate guidance
-- **Long-press activation**: Uses long-press to initiate move/resize operations
-- **Edge detection**: Provides edge-specific resize operations for touch interfaces
-- **Consistent messaging**: Adapts terminology for touch ("tap" vs "click")
+### Mobile/Touch Interactions
+- Tap feedback shows available actions
+- Long-press and tap-and-drag support
+- Edge detection for touch-based resizing
+- Mobile-friendly terminology
 
 ## Platform Detection
 
-The system automatically detects the platform and adapts both messages and interaction models:
+The system automatically detects the platform and adapts all messages with appropriate terminology:
 
 ```dart
-// Platform detection for optimized interactions
-final isMobile = Theme.of(context).platform == TargetPlatform.iOS || 
-                Theme.of(context).platform == TargetPlatform.android;
-
-// Example conditional interactions
-onLongPressStart: isMobile ? (details) {
-  // Mobile-specific long press interaction
-} : null,
-
-onTap: !isMobile ? () {
-  // Web-specific single-click interaction
-} : null,
+// Example of platform-aware message adaptation
+final message = _isMobilePlatform(context)
+  ? "Tap and hold to move this item" 
+  : "Click and drag to move this item";
 ```
 
 ## Performance Optimizations
