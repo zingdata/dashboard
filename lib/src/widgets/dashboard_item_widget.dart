@@ -364,10 +364,14 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       onTapUp: _handleTapUp,
       onLongPress: _handleLongPress,
       onLongPressEnd: _handleLongPressEnd,
-      // Add pan gesture support for mobile dragging
+      // Add pan gesture support for mobile dragging with a minimum drag distance threshold
       onPanStart: _handlePanStart,
       onPanUpdate: _handlePanUpdate,
       onPanEnd: _handlePanEnd,
+      // Change from opaque to deferToChild to allow events to reach children
+      behavior: HitTestBehavior.deferToChild,
+      // Add drag threshold to differentiate between normal taps and drags
+      dragStartBehavior: DragStartBehavior.down,
       child: child,
     );
     
@@ -398,6 +402,9 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
 
   // Mobile touch handlers
   void _handleTapDown(TapDownDetails details) {
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
     final tapPosition = details.localPosition;
     var desktopCursorState = _determineCursor(tapPosition);
     
@@ -410,11 +417,17 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   }
 
   void _handleTapUp(TapUpDetails details) {
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
     // Clear message when tap is released without long press
     widget.layoutController.updateCursorMessage?.call('');
   }
 
   void _handleLongPress() {
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
     // Provide haptic feedback when long pressing on mobile
     if (_isMobileDevice()) {
       HapticFeedback.mediumImpact();
@@ -431,6 +444,9 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
     // Clear message when long press ends
     widget.layoutController.updateCursorMessage?.call('');
   }
@@ -440,6 +456,9 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   Offset? _touchStartPosition;
 
   void _handlePanStart(DragStartDetails details) {
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
     final touchPosition = details.localPosition;
     // First get the desktop cursor state that would apply at this position
     var desktopCursorState = _determineCursor(touchPosition);
@@ -481,18 +500,30 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
-    // Continue showing the active message during drag/resize
-    if (_activeTouchState != null) {
-      // For dragging operations, show a more specific message during the active drag
-      if (_activeTouchState == DashboardCursorState.mobileDrag) {
-        widget.layoutController.updateCursorMessage?.call("Dragging item - release to place");
-      } else if (_activeTouchState == DashboardCursorState.mobileResize) {
-        widget.layoutController.updateCursorMessage?.call("Resizing - release when done");
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
+    // Only process if we have active touch state and panStart
+    if (_activeTouchState != null && panStart != null) {
+      // Calculate the drag distance
+      final dragDistance = (details.localPosition - panStart!).distance;
+      
+      // Only consider it a drag if moved more than 5 pixels
+      if (dragDistance > 5.0) {
+        // For dragging operations, show a more specific message during the active drag
+        if (_activeTouchState == DashboardCursorState.mobileDrag) {
+          widget.layoutController.updateCursorMessage?.call("Dragging item - release to place");
+        } else if (_activeTouchState == DashboardCursorState.mobileResize) {
+          widget.layoutController.updateCursorMessage?.call("Resizing - release when done");
+        }
       }
     }
   }
 
   void _handlePanEnd(DragEndDetails details) {
+    // Only process in edit mode
+    if (!widget.layoutController.isEditing) return;
+    
     // Provide haptic feedback when ending a drag on mobile
     if (_isMobileDevice()) {
       HapticFeedback.lightImpact();
