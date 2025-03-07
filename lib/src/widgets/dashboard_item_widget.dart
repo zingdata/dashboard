@@ -359,31 +359,31 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     final bool isMobile = _isMobileDevice();
     
     // Always add gesture detector for touch interactions
-    Widget result = GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onLongPress: _handleLongPress,
-      onLongPressEnd: _handleLongPressEnd,
-      // Add pan gesture support for mobile dragging with a minimum drag distance threshold
-      onPanStart: _handlePanStart,
-      onPanUpdate: _handlePanUpdate,
-      onPanEnd: _handlePanEnd,
-      // Change from opaque to deferToChild to allow events to reach children
-      behavior: HitTestBehavior.deferToChild,
-      // Add drag threshold to differentiate between normal taps and drags
-      dragStartBehavior: DragStartBehavior.down,
-      child: child,
-    );
+    // Widget result = GestureDetector(
+    //   onTapDown: _handleTapDown,
+    //   onTapUp: _handleTapUp,
+    //   onLongPress: _handleLongPress,
+    //   onLongPressEnd: _handleLongPressEnd,
+    //   // Add pan gesture support for mobile dragging with a minimum drag distance threshold
+    //   onPanStart: _handlePanStart,
+    //   onPanUpdate: _handlePanUpdate,
+    //   onPanEnd: _handlePanEnd,
+    //   // Change from opaque to deferToChild to allow events to reach children
+    //   behavior: HitTestBehavior.deferToChild,
+    //   // Add drag threshold to differentiate between normal taps and drags
+    //   dragStartBehavior: DragStartBehavior.down,
+    //   child: child,
+    // );
     
     // Add MouseRegion only on desktop platforms
-    if (!isMobile) {
-      result = MouseRegion(
+  //  if (!isMobile) {
+    final  result = MouseRegion(
         cursor: cursor,
         onHover: _hover,
         onExit: _exit,
-        child: result,
+        child: child,
       );
-    }
+    //}
     
     return result;
   }
