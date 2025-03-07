@@ -264,57 +264,11 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
     if (widget.dashboardController.isEditing) {
       result = GestureDetector(
-        // Single tap selection - better for web interactions
-        onTap: () {
-          // Show guidance message based on platform
-          widget.dashboardController.updateCursorMessage?.call(
-            _isMobilePlatform(context) 
-              ? "Tap and hold to move, tap edge to resize" 
-              : "Click and drag to move, click edge to resize"
-          );
-          
-          // Clear message after short delay
-          Future.delayed(const Duration(seconds: 2), () {
-            widget.dashboardController.updateCursorMessage?.call('');
-          });
-        },
         onPanStart: widget.editModeSettings.panEnabled
             ? (panStart) {
                 _onMoveStart(panStart.localPosition);
-                
-                // Get more specific cursor messages based on what's being manipulated
-                if (_editing != null) {
-                  if (_editingResize) {
-                    // Determine the direction of resize based on hold directions
-                    String directionMsg = "";
-                    if (_holdDirections!.contains(AxisDirection.left) || 
-                        _holdDirections!.contains(AxisDirection.right)) {
-                      directionMsg += "horizontally";
-                    }
-                    
-                    if (_holdDirections!.contains(AxisDirection.up) || 
-                        _holdDirections!.contains(AxisDirection.down)) {
-                      if (directionMsg.isNotEmpty) {
-                        directionMsg = "diagonally"; // Both horizontal and vertical
-                      } else {
-                        directionMsg = "vertically";
-                      }
-                    }
-                    
-                    // Update with specific resize direction
-                    widget.dashboardController.updateCursorMessage?.call(
-                      "Item selected - drag $directionMsg to resize"
-                    );
-                  } else {
-                    // Moving the whole item
-                    widget.dashboardController.updateCursorMessage?.call(
-                      _isMobilePlatform(context)
-                        ? DashboardCursorState.mobileGrabbing.message
-                        : DashboardCursorState.grabbing.message
-                    );
-                  }
-                }
-                
+                // Update cursor message to indicate dragging on mobile
+                widget.dashboardController.updateCursorMessage?.call(DashboardCursorState.grabbing.message);
                 isDraggingNotifier.value = true;
               }
             : null,
@@ -322,86 +276,26 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             ? (u) {
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
-                
-                // Keep cursor message updated during drag with more specific feedback
+                // Keep cursor message updated during drag if needed
                 if (!isDraggingNotifier.value) {
                   isDraggingNotifier.value = true;
-                }
-                
-                // Update message based on what's being manipulated
-                if (_editing != null) {
-                  if (_editingResize) {
-                    // Show current size during resize when possible
-                    String specificMessage = "Resizing";
-                    if (_editing!._originSize != null) {
-                      final currentWidth = _editing!.width;
-                      final currentHeight = _editing!.height;
-                      specificMessage = "Resizing to ${currentWidth}x${currentHeight}";
-                    }
-                    widget.dashboardController.updateCursorMessage?.call(specificMessage);
-                  } else {
-                    widget.dashboardController.updateCursorMessage?.call(
-                      _isMobilePlatform(context)
-                        ? "Moving item - lift finger to place"
-                        : "Moving item - release to place"
-                    );
-                  }
+                  widget.dashboardController.updateCursorMessage?.call(DashboardCursorState.grabbing.message);
                 }
               }
             : null,
         onPanEnd: widget.editModeSettings.panEnabled
             ? (e) {
                 _onMoveEnd();
-                
-                // Provide completion message specific to what was done
-                if (_editing != null) {
-                  if (_editingResize) {
-                    widget.dashboardController.updateCursorMessage?.call("Resize complete");
-                  } else {
-                    widget.dashboardController.updateCursorMessage?.call("Item placed");
-                  }
-                  
-                  // Clear message after brief delay
-                  Future.delayed(const Duration(milliseconds: 800), () {
-                    widget.dashboardController.updateCursorMessage?.call('');
-                  });
-                } else {
-                  widget.dashboardController.updateCursorMessage?.call('');
-                }
-                
+                // Clear dragging message when finished
+                widget.dashboardController.updateCursorMessage?.call('');
                 isDraggingNotifier.value = false;
               }
             : null,
         onLongPressStart: widget.editModeSettings.longPressEnabled
             ? (longPressStart) {
                 _onMoveStart(longPressStart.localPosition);
-                
-                // Show more specific message based on what's being manipulated
-                if (_editing != null) {
-                  if (_editingResize) {
-                    String directionMsg = "";
-                    if (_holdDirections!.contains(AxisDirection.left) || 
-                        _holdDirections!.contains(AxisDirection.right)) {
-                      directionMsg += "horizontally";
-                    }
-                    
-                    if (_holdDirections!.contains(AxisDirection.up) || 
-                        _holdDirections!.contains(AxisDirection.down)) {
-                      if (directionMsg.isNotEmpty) {
-                        directionMsg = "diagonally"; // Both horizontal and vertical
-                      } else {
-                        directionMsg = "vertically";
-                      }
-                    }
-                    
-                    widget.dashboardController.updateCursorMessage?.call(
-                      "Item selected - drag $directionMsg to resize"
-                    );
-                  } else {
-                    widget.dashboardController.updateCursorMessage?.call("Item selected - drag to move");
-                  }
-                }
-                
+                // Show selection message for long press
+                widget.dashboardController.updateCursorMessage?.call("Item selected - drag to move");
                 isDraggingNotifier.value = true;
               }
             : null,
@@ -409,63 +303,35 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             ? (u) {
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
-                
-                // Update cursor message based on what's happening
-                if (_editing != null) {
-                  if (_editingResize) {
-                    // Show current size during resize when possible
-                    String specificMessage = "Resizing";
-                    if (_editing!._originSize != null) {
-                      final currentWidth = _editing!.width;
-                      final currentHeight = _editing!.height;
-                      specificMessage = "Resizing to ${currentWidth}x${currentHeight}";
-                    }
-                    widget.dashboardController.updateCursorMessage?.call(specificMessage);
-                  } else {
-                    widget.dashboardController.updateCursorMessage?.call(
-                      _isMobilePlatform(context)
-                        ? "Moving item - lift finger to place"
-                        : "Moving item - release to place"
-                    );
-                  }
+                // Keep cursor message updated during long press drag
+                if (!isDraggingNotifier.value) {
+                  isDraggingNotifier.value = true;
+                  widget.dashboardController.updateCursorMessage?.call(DashboardCursorState.grabbing.message);
                 }
               }
             : null,
         onLongPressEnd: widget.editModeSettings.longPressEnabled
             ? (e) {
                 _onMoveEnd();
-                
-                // Provide completion message specific to what was done
-                if (_editing != null) {
-                  if (_editingResize) {
-                    widget.dashboardController.updateCursorMessage?.call("Resize complete");
-                  } else {
-                    widget.dashboardController.updateCursorMessage?.call("Item placed");
-                  }
-                  
-                  // Clear message after brief delay
-                  Future.delayed(const Duration(milliseconds: 800), () {
-                    widget.dashboardController.updateCursorMessage?.call('');
-                  });
-                } else {
-                  widget.dashboardController.updateCursorMessage?.call('');
-                }
-                
+                // Clear message when done with long press
+                widget.dashboardController.updateCursorMessage?.call('');
                 isDraggingNotifier.value = false;
               }
             : null,
+        // Add tap handling for mobile interface feedback
+        onTap: widget.dashboardController.isEditing ? () {
+          // Show brief tap message
+          widget.dashboardController.updateCursorMessage?.call("Tap and hold to move item");
+          // Clear message after a short delay
+          Future.delayed(const Duration(seconds: 1), () {
+            widget.dashboardController.updateCursorMessage?.call('');
+          });
+        } : null,
         child: result,
       );
     }
     result = MouseRegion(cursor: cursor, child: result);
     return result;
-  }
-
-  // Helper to determine if we're on a mobile platform
-  bool _isMobilePlatform(BuildContext context) {
-    final platform = Theme.of(context).platform;
-    return platform == TargetPlatform.iOS || 
-           platform == TargetPlatform.android;
   }
 
   void onCursorUpdate(MouseCursor cursor) {
