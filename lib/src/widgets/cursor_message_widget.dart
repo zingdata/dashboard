@@ -15,6 +15,7 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
     this.style,
     this.emptyWidget,
     this.builder,
+    this.mobileFriendly = true,
   }) : super(key: key);
 
   /// The dashboard controller that provides cursor messages.
@@ -28,6 +29,10 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
   
   /// Optional builder for custom message display.
   final Widget Function(BuildContext context, String message)? builder;
+  
+  /// Whether to use a mobile-friendly style for the message display.
+  /// This makes the touch messages more prominent and easier to see on mobile.
+  final bool mobileFriendly;
 
   @override
   Widget build(BuildContext context) {
@@ -42,15 +47,40 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
           return builder!(context, message);
         }
         
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            message,
-            style: style ?? const TextStyle(color: Colors.white),
+        final bool isMobile = defaultTargetPlatform == TargetPlatform.iOS || 
+                            defaultTargetPlatform == TargetPlatform.android;
+        
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Container(
+            key: ValueKey<String>(message),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile && mobileFriendly ? 20 : 16, 
+              vertical: isMobile && mobileFriendly ? 12 : 8,
+            ),
+            margin: EdgeInsets.symmetric(
+              horizontal: isMobile && mobileFriendly ? 20 : 0,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(isMobile && mobileFriendly ? 8 : 4),
+              boxShadow: isMobile && mobileFriendly ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                )
+              ] : null,
+            ),
+            child: Text(
+              message,
+              style: style ?? TextStyle(
+                color: Colors.white,
+                fontSize: isMobile && mobileFriendly ? 16 : 14,
+                fontWeight: isMobile && mobileFriendly ? FontWeight.w600 : FontWeight.normal,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         );
       },

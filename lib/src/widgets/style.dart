@@ -179,4 +179,34 @@ class DashboardCursorState {
     SystemMouseCursors.text,
     'Click to edit content',
   );
+  
+  // Mobile-specific touch states
+  static const DashboardCursorState mobileTouch = DashboardCursorState(
+    MouseCursor.defer,
+    'Tap and hold to interact',
+  );
+  
+  static const DashboardCursorState mobileDrag = DashboardCursorState(
+    MouseCursor.defer,
+    'Drag to move item',
+  );
+  
+  static const DashboardCursorState mobileResize = DashboardCursorState(
+    MouseCursor.defer,
+    'Drag to resize',
+  );
+  
+  // Helper method to get mobile-friendly version of a cursor state
+  static DashboardCursorState getMobileVersion(DashboardCursorState desktopState) {
+    if (desktopState == grab) {
+      return mobileDrag;
+    } else if (desktopState == resizeHorizontal || 
+               desktopState == resizeVertical ||
+               desktopState == resizeTopLeft ||
+               desktopState == resizeTopRight) {
+      return mobileResize;
+    } else {
+      return mobileTouch;
+    }
+  }
 }
