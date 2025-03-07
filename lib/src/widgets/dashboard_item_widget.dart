@@ -289,8 +289,10 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           final b = onBottomSide(localPosition.dy);
           
           String message;
-          if (r || l || t || b) {
-            // Clicking on edge - show selected for resize
+          bool isResize = r || l || t || b;
+          
+          if (isResize) {
+            // Clicking on edge - start resize operation
             String direction = "";
             if (r || l) direction += "horizontally";
             if (t || b) {
@@ -301,19 +303,18 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
               }
             }
             message = "Item selected - click and drag to resize $direction";
+            
+            // Initialize the edit session for resize (false = not transform)
+            widget.layoutController.startEdit(widget.id, false);
           } else {
-            // Clicking in center - show selected for move
+            // Clicking in center - start move operation
             message = "Item selected - click and drag to move";
+            
+            // Initialize the edit session for move (true = transform)
+            widget.layoutController.startEdit(widget.id, true);
           }
           
           widget.layoutController.updateCursorMessage?.call(message);
-          
-          // Clear message after a delay if no further interaction
-          Future.delayed(const Duration(milliseconds: 1500), () {
-            if (!widget.isDraggingNotifier.value) {
-              widget.layoutController.updateCursorMessage?.call('');
-            }
-          });
         } : null,
         
         // Mobile-specific feedback for touch devices
@@ -384,44 +385,53 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           // Prepare specific message based on touch location
           String message = cursorState.message;
           
-          if (r || l || t || b) {
-            // Touching an edge - prepare resize operation message
-            String direction = "";
-            if (r || l) direction += "horizontally";
-            if (t || b) {
-              if (direction.isNotEmpty) {
-                direction = "diagonally";
-              } else {
-                direction = "vertically";
+          // For web platforms that already initialized the edit session via tap,
+          // check if session already exists before creating a new one
+          final currentEdit = widget.layoutController.editSession?.editing.id == widget.id;
+          
+          if (!currentEdit) {
+            // Initialize edit session if not already done
+            if (r || l || t || b) {
+              // Touching an edge - prepare resize operation message
+              String direction = "";
+              if (r || l) direction += "horizontally";
+              if (t || b) {
+                if (direction.isNotEmpty) {
+                  direction = "diagonally";
+                } else {
+                  direction = "vertically";
+                }
               }
-            }
-            
-            message = _isMobilePlatform(context)
-              ? "Resizing $direction" 
-              : "Resizing $direction";
-            
-            // Flag as dragging
-            widget.isDraggingNotifier.value = true;
-            
-            // Start edit session for resize (not transform)
-            widget.layoutController.startEdit(widget.id, false);
-          } else {
-            // Touching the center - prepare move operation message
-            message = _isMobilePlatform(context)
-              ? "Moving item - lift finger to place" 
-              : "Moving item - release to place";
               
-            // Start transform move operation
-            widget.layoutController.startEdit(widget.id, true);
-            widget.isDraggingNotifier.value = true;
+              message = _isMobilePlatform(context)
+                ? "Resizing $direction" 
+                : "Resizing $direction";
+              
+              // Start edit session for resize (not transform)
+              widget.layoutController.startEdit(widget.id, false);
+            } else {
+              // Touching the center - prepare move operation message
+              message = _isMobilePlatform(context)
+                ? "Moving item - lift finger to place" 
+                : "Moving item - release to place";
+                
+              // Start transform move operation
+              widget.layoutController.startEdit(widget.id, true);
+            }
           }
+          
+          // Flag as dragging
+          widget.isDraggingNotifier.value = true;
           
           // Update message for resize operation
           widget.layoutController.updateCursorMessage?.call(message);
         },
         onPanUpdate: (details) {
           // Skip if we didn't detect a valid touch on start
-          if (_touchStartPosition == null || !widget.isDraggingNotifier.value) return;
+          if (_touchStartPosition == null) return;
+          
+          // Ensure we're in dragging mode
+          widget.isDraggingNotifier.value = true;
           
           // For lengthy operations, provide current dimensions when possible
           final currentEdit = widget.layoutController.editSession?.editing.id == widget.itemCurrentLayout.id;
@@ -429,7 +439,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           if (currentEdit && widget.layoutController.editSession?.editing._originSize != null) {
             final width = widget.itemCurrentLayout.width;
             final height = widget.itemCurrentLayout.height; 
-            widget.layoutController.updateCursorMessage?.call("Size: ${width}x${height}");
+            widget.layoutController.updateCursorMessage?.call("Size: ${width}x$height");
           } else {
             // Keep showing the basic message during operation
             widget.layoutController.updateCursorMessage?.call(_currentCursorState.message);
@@ -495,7 +505,10 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           widget.layoutController.updateCursorMessage?.call(message);
         } : null,
         onLongPressMoveUpdate: _isMobilePlatform(context) ? (details) {
-          if (_touchStartPosition == null || !widget.isDraggingNotifier.value) return;
+          if (_touchStartPosition == null) return;
+          
+          // Ensure we're in dragging mode
+          widget.isDraggingNotifier.value = true;
           
           // Show live dimensions during resize operations
           final currentEdit = widget.layoutController.editSession?.editing.id == widget.itemCurrentLayout.id;
@@ -503,7 +516,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
           if (currentEdit && widget.layoutController.editSession?.editing._originSize != null) {
             final width = widget.itemCurrentLayout.width;
             final height = widget.itemCurrentLayout.height; 
-            widget.layoutController.updateCursorMessage?.call("Size: ${width}x${height}");
+            widget.layoutController.updateCursorMessage?.call("Size: ${width}x$height");
           }
         } : null,
         onLongPressEnd: _isMobilePlatform(context) ? (details) {
