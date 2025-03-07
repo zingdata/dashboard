@@ -1,10 +1,15 @@
 # Dashboard Cursor Messages
 
-This feature allows you to display helpful guidance messages to users based on their current interaction with dashboard items, working on both desktop (mouse/hover) and mobile (touch) platforms.
+This feature provides contextual guidance messages based on user interactions with dashboard items, delivering a unified experience across both web and mobile platforms.
 
 ## How It Works
 
-When users hover over or interact with dashboard items, the system automatically detects what type of interaction is possible (move, resize, etc.) and provides a relevant message through a high-performance ValueNotifier.
+When users interact with dashboard items (hover, touch, drag, etc.), the system automatically:
+
+1. Detects the type of interaction (move, resize, etc.)
+2. Identifies the specific edge or region being interacted with
+3. Determines the platform (web/mobile) to provide appropriate terminology
+4. Delivers real-time guidance through a high-performance ValueNotifier
 
 ## Usage Example
 
@@ -61,54 +66,64 @@ class DashboardExample extends StatelessWidget {
 
 ## Available Messages
 
-The system automatically provides context-appropriate messages for different interactions:
+The system provides precision guidance with location-specific messages:
 
-### Mouse/Desktop Interactions
-- **Moving items**: "Click and drag to move item"
-- **While dragging**: "Dragging item - release to place"
-- **Resizing horizontally**: "Drag to resize horizontally"
-- **Resizing vertically**: "Drag to resize vertically"
-- **Resizing diagonally**: "Drag to resize diagonally"
+### Edge-Specific Messages
+- **Left Edge**: "Drag left edge to resize horizontally"
+- **Right Edge**: "Drag right edge to resize horizontally"
+- **Top Edge**: "Drag top edge to resize vertically"
+- **Bottom Edge**: "Drag bottom edge to resize vertically"
+- **Corners**: "Drag corner to resize diagonally"
 
-### Touch/Mobile Interactions
-- **Selecting items**: "Tap to select, double-tap to edit"
-- **Moving items**: "Touch and hold to move item"
-- **While moving**: "Moving item - lift finger to place"
-- **Resizing from edges**: "Touch edge and drag to resize"
-- **Resizing from corners**: "Drag corner to resize in both directions"
-- **After resizing**: "Resize complete"
+### Operation Status Messages
+- **Selection**: "Item selected"
+- **Moving**: "Moving item - release to place" / "Moving item - lift finger to place"
+- **Resizing**: "Resizing to 3x4" (with live dimensions)
+- **Completion**: "Resize complete" / "Item placed in new position"
 
-## Platform-Aware Messages
+### Platform-Specific Terminology
+Web/Desktop:
+- "Click and drag to move item"
+- "Click and drag to resize horizontally"
 
-The system automatically adapts messages based on the interaction method:
+Mobile/Touch:
+- "Tap and hold to move item"
+- "Touch edge and drag to resize"
 
-- On desktop, messages are triggered by hover and mouse events
-- On mobile, messages are triggered by touch gestures
-- The content is adapted to make sense for the interaction method (e.g., "click" vs "tap")
+## Unified Web & Mobile Experience
 
-## Advanced Usage
+The system automatically adapts to provide consistent guidance across platforms:
 
-You can also access the cursor message notifier directly from the controller if you want to build your own custom UI:
+### Web/Desktop Interactions
+- Hover feedback shows available actions
+- Single-click selection and dragging
+- Live resizing with dimension feedback
+- Precise edge detection for resize operations
+
+### Mobile/Touch Interactions
+- Tap feedback shows available actions
+- Long-press and tap-and-drag support
+- Edge detection for touch-based resizing
+- Mobile-friendly terminology
+
+## Platform Detection
+
+The system automatically detects the platform and adapts all messages with appropriate terminology:
 
 ```dart
-ValueListenableBuilder<String>(
-  valueListenable: controller.cursorMessageNotifier,
-  builder: (context, message, _) {
-    // Build your custom UI with the message
-    return YourCustomWidget(message: message);
-  },
-)
+// Example of platform-aware message adaptation
+final message = _isMobilePlatform(context)
+  ? "Tap and hold to move this item" 
+  : "Click and drag to move this item";
 ```
 
 ## Performance Optimizations
 
-The cursor message system is optimized for performance:
-
-1. Uses ValueNotifier instead of streams for direct, synchronous updates
-2. Avoids unnecessary widget rebuilds by only updating when messages actually change
-3. Separates cursor visual updates from message updates to minimize UI redraws
-4. Implements efficient gesture detection to reduce overhead
+1. Uses ValueNotifier for synchronous, immediate updates
+2. Minimizes UI rebuilds by separating cursor visuals from messages
+3. Employs efficient gesture detection for both mouse and touch
+4. Provides progressive disclosure - more detail as operations continue
 
 ## Custom Messages
 
-The system uses the `DashboardCursorState` class to determine which messages to display. You can extend this functionality by implementing additional cursor states or customizing the existing ones. 
+The `DashboardCursorState` class now includes a comprehensive set of edge-specific states and messages. You can extend this functionality by adding your own custom states. 
