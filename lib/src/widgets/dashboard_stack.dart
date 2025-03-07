@@ -280,12 +280,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         },
         onPanStart: widget.editModeSettings.panEnabled
             ? (panStart) {
-                // For mobile devices, prefer the long press handlers
-                if (_isMobilePlatform(context)) {
-                  return;
-                }
-                
-                // On web/desktop, enable single-click interactions
                 _onMoveStart(panStart.localPosition);
                 
                 // Get more specific cursor messages based on what's being manipulated
@@ -314,7 +308,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                   } else {
                     // Moving the whole item
                     widget.dashboardController.updateCursorMessage?.call(
-                      DashboardCursorState.grabbing.message
+                      _isMobilePlatform(context)
+                        ? DashboardCursorState.mobileGrabbing.message
+                        : DashboardCursorState.grabbing.message
                     );
                   }
                 }
@@ -324,11 +320,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             : null,
         onPanUpdate: widget.editModeSettings.panEnabled
             ? (u) {
-                // Skip if on mobile or not dragging
-                if (_isMobilePlatform(context) || !isDraggingNotifier.value) {
-                  return;
-                }
-                
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
                 
@@ -350,7 +341,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                     widget.dashboardController.updateCursorMessage?.call(specificMessage);
                   } else {
                     widget.dashboardController.updateCursorMessage?.call(
-                      "Moving item - release to place"
+                      _isMobilePlatform(context)
+                        ? "Moving item - lift finger to place"
+                        : "Moving item - release to place"
                     );
                   }
                 }
@@ -358,11 +351,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             : null,
         onPanEnd: widget.editModeSettings.panEnabled
             ? (e) {
-                // Skip if on mobile
-                if (_isMobilePlatform(context)) {
-                  return;
-                }
-                
                 _onMoveEnd();
                 
                 // Provide completion message specific to what was done
@@ -386,11 +374,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             : null,
         onLongPressStart: widget.editModeSettings.longPressEnabled
             ? (longPressStart) {
-                // Only handle long press on mobile
-                if (!_isMobilePlatform(context)) {
-                  return;
-                }
-                
                 _onMoveStart(longPressStart.localPosition);
                 
                 // Show more specific message based on what's being manipulated
@@ -424,11 +407,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             : null,
         onLongPressMoveUpdate: widget.editModeSettings.longPressEnabled
             ? (u) {
-                // Only handle long press updates on mobile
-                if (!_isMobilePlatform(context)) {
-                  return;
-                }
-                
                 setSpeed(u.localPosition);
                 _onMoveUpdate(u.localPosition);
                 
@@ -445,7 +423,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
                     widget.dashboardController.updateCursorMessage?.call(specificMessage);
                   } else {
                     widget.dashboardController.updateCursorMessage?.call(
-                      "Moving item - lift finger to place"
+                      _isMobilePlatform(context)
+                        ? "Moving item - lift finger to place"
+                        : "Moving item - release to place"
                     );
                   }
                 }
@@ -453,11 +433,6 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
             : null,
         onLongPressEnd: widget.editModeSettings.longPressEnabled
             ? (e) {
-                // Only handle long press end on mobile
-                if (!_isMobilePlatform(context)) {
-                  return;
-                }
-                
                 _onMoveEnd();
                 
                 // Provide completion message specific to what was done
