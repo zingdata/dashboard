@@ -15,7 +15,6 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
     this.style,
     this.emptyWidget,
     this.builder,
-    this.adaptForMobile = true,
   }) : super(key: key);
 
   /// The dashboard controller that provides cursor messages.
@@ -29,11 +28,6 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
   
   /// Optional builder for custom message display.
   final Widget Function(BuildContext context, String message)? builder;
-  
-  /// Whether to automatically adapt messages for mobile platforms.
-  /// If true, certain desktop-specific terms will be changed to mobile-friendly ones.
-  /// For example, "Click" changes to "Tap", "Drag" remains the same, etc.
-  final bool adaptForMobile;
 
   @override
   Widget build(BuildContext context) {
@@ -44,46 +38,22 @@ class DashboardCursorMessageWidget<T extends DashboardItem> extends StatelessWid
           return emptyWidget ?? const SizedBox.shrink();
         }
         
-        // Adapt message for mobile if needed
-        final adaptedMessage = adaptForMobile 
-            ? _adaptMessageForPlatform(context, message)
-            : message;
-        
         if (builder != null) {
-          return builder!(context, adaptedMessage);
+          return builder!(context, message);
         }
         
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha :0.7),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
-            adaptedMessage,
+            message,
             style: style ?? const TextStyle(color: Colors.white),
           ),
         );
       },
     );
-  }
-  
-  /// Adapts desktop-oriented messages to be more mobile-friendly
-  String _adaptMessageForPlatform(BuildContext context, String message) {
-    // Check if we're on a mobile platform
-    final isMobile = Theme.of(context).platform == TargetPlatform.iOS || 
-                   Theme.of(context).platform == TargetPlatform.android;
-    
-    if (!isMobile) return message;
-    
-    // Replace desktop-specific terms with mobile-friendly alternatives
-    return message
-      .replaceAll('Click', 'Tap')
-      .replaceAll('click', 'tap')
-      .replaceAll('Cursor', 'Finger')
-      .replaceAll('cursor', 'finger')
-      .replaceAll('Mouse', 'Touch')
-      .replaceAll('mouse', 'touch')
-      .replaceAll('release', 'lift finger');
   }
 } 

@@ -1,10 +1,10 @@
 # Dashboard Cursor Messages
 
-This feature allows you to display helpful guidance messages to users based on their current interaction with dashboard items, working on both desktop (mouse/hover) and mobile (touch) platforms.
+This feature allows you to display helpful guidance messages to users based on their current interaction with dashboard items.
 
 ## How It Works
 
-When users hover over or interact with dashboard items, the system automatically detects what type of interaction is possible (move, resize, etc.) and provides a relevant message through a high-performance ValueNotifier.
+When users hover over or interact with dashboard items, the system automatically detects what type of interaction is possible (move, resize, etc.) and provides a relevant message through a high-performance ValueNotifier. The system is platform-aware and provides different messages for desktop and mobile interactions.
 
 ## Usage Example
 
@@ -63,28 +63,21 @@ class DashboardExample extends StatelessWidget {
 
 The system automatically provides context-appropriate messages for different interactions:
 
-### Mouse/Desktop Interactions
+### Desktop Messages
 - **Moving items**: "Click and drag to move item"
 - **While dragging**: "Dragging item - release to place"
 - **Resizing horizontally**: "Drag to resize horizontally"
 - **Resizing vertically**: "Drag to resize vertically"
 - **Resizing diagonally**: "Drag to resize diagonally"
 
-### Touch/Mobile Interactions
-- **Selecting items**: "Tap to select, double-tap to edit"
+### Mobile Messages
 - **Moving items**: "Touch and hold to move item"
-- **While moving**: "Moving item - lift finger to place"
-- **Resizing from edges**: "Touch edge and drag to resize"
-- **Resizing from corners**: "Drag corner to resize in both directions"
-- **After resizing**: "Resize complete"
+- **While dragging**: "Moving item - lift finger to place"
+- **Resizing edges**: "Touch edge and drag to resize"
+- **Resizing corners**: "Drag corner to resize in both directions"
+- **Selecting**: "Tap to select, double-tap to edit"
 
-## Platform-Aware Messages
-
-The system automatically adapts messages based on the interaction method:
-
-- On desktop, messages are triggered by hover and mouse events
-- On mobile, messages are triggered by touch gestures
-- The content is adapted to make sense for the interaction method (e.g., "click" vs "tap")
+The system automatically detects the platform (mobile or desktop) and provides the appropriate cursor states and messages.
 
 ## Advanced Usage
 
@@ -107,7 +100,8 @@ The cursor message system is optimized for performance:
 1. Uses ValueNotifier instead of streams for direct, synchronous updates
 2. Avoids unnecessary widget rebuilds by only updating when messages actually change
 3. Separates cursor visual updates from message updates to minimize UI redraws
-4. Implements efficient gesture detection to reduce overhead
+4. Implements efficient hover detection to reduce garbage collection pressure
+5. Platform-specific messages that adapt to the user's device (mobile or desktop)
 
 ## Custom Messages
 

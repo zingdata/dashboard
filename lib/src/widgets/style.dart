@@ -179,7 +179,7 @@ class DashboardCursorState {
     SystemMouseCursors.text,
     'Click to edit content',
   );
-
+  
   // Mobile-specific states with touch-oriented messages
   static const DashboardCursorState mobileGrab = DashboardCursorState(
     SystemMouseCursors.grab, 

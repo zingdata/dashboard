@@ -59,6 +59,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     _animationController.dispose();
     _multiplierAnimationController.dispose();
     widget.itemCurrentLayout.removeListener(_listen);
+    widget.isDraggingNotifier.removeListener(_onDraggingStateChanged);
     super.dispose();
   }
 
@@ -77,7 +78,27 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     _multiplierAnimationController =
         AnimationController(vsync: this, value: 0, duration: widget.editModeSettings.duration);
     widget.itemCurrentLayout.addListener(_listen);
+    
+    // Listen for changes in the dragging state
+    widget.isDraggingNotifier.addListener(_onDraggingStateChanged);
+    
     super.initState();
+  }
+
+  void _onDraggingStateChanged() {
+    // When dragging state changes, update the cursor if needed
+    if (widget.isDraggingNotifier.value) {
+      // Check if we're on a mobile platform to use appropriate cursor states
+      final bool isMobile = Theme.of(context).platform == TargetPlatform.android || 
+                            Theme.of(context).platform == TargetPlatform.iOS;
+                            
+      // When dragging, show the grabbing cursor
+      if (_cursorState == DashboardCursorState.grab || _cursorState == DashboardCursorState.mobileGrab) {
+        _cursorState = isMobile ? DashboardCursorState.mobileGrabbing : DashboardCursorState.grabbing;
+        cursor = _cursorState.cursor;
+        widget.onCursorUpdate(cursor);
+      }
+    }
   }
 
   ItemCurrentPosition? get _resizePosition => widget.itemCurrentLayout._resizePosition?.value;
@@ -134,26 +155,30 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     var t = onTopSide(y);
     var b = onBottomSide(y);
     
+    // Check if we're on a mobile platform to use appropriate cursor states
+    final bool isMobile = Theme.of(context).platform == TargetPlatform.android || 
+                          Theme.of(context).platform == TargetPlatform.iOS;
+    
     if (r) {
       if (b) {
-        return DashboardCursorState.resizeTopLeft;
+        return isMobile ? DashboardCursorState.mobileCorner : DashboardCursorState.resizeTopLeft;
       } else if (t) {
-        return DashboardCursorState.resizeTopRight;
+        return isMobile ? DashboardCursorState.mobileCorner : DashboardCursorState.resizeTopRight;
       } else {
-        return DashboardCursorState.resizeHorizontal;
+        return isMobile ? DashboardCursorState.mobileResize : DashboardCursorState.resizeHorizontal;
       }
     } else if (l) {
       if (b) {
-        return DashboardCursorState.resizeTopRight;
+        return isMobile ? DashboardCursorState.mobileCorner : DashboardCursorState.resizeTopRight;
       } else if (t) {
-        return DashboardCursorState.resizeTopLeft;
+        return isMobile ? DashboardCursorState.mobileCorner : DashboardCursorState.resizeTopLeft;
       } else {
-        return DashboardCursorState.resizeHorizontal;
+        return isMobile ? DashboardCursorState.mobileResize : DashboardCursorState.resizeHorizontal;
       }
     } else if (b || t) {
-      return DashboardCursorState.resizeVertical;
+      return isMobile ? DashboardCursorState.mobileResize : DashboardCursorState.resizeVertical;
     } else {
-      return DashboardCursorState.grab;
+      return isMobile ? DashboardCursorState.mobileGrab : DashboardCursorState.grab;
     }
   }
 
@@ -230,9 +255,6 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
   bool onAnimation = false;
   DateTime? animationStart;
 
-  Offset? _touchStartPosition;
-  DashboardCursorState _currentCursorState = DashboardCursorState.none;
-
   @override
   Widget build(BuildContext context) {
     Widget result = widget.child;
@@ -241,92 +263,10 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       if (widget.layoutController.absorbPointer) {
         result = AbsorbPointer(child: result);
       }
-      
-      // Wrap with GestureDetector for mobile/touch devices to handle resize operations
-      result = GestureDetector(
-        // Mobile-specific feedback for touch devices
-        onTapDown: (details) {
-          // Check where the user tapped to provide appropriate guidance
-          final localPosition = details.localPosition;
-          final cursorState = _determineCursor(localPosition);
-          
-          // Update message based on where user tapped
-          widget.layoutController.updateCursorMessage?.call(cursorState.message);
-        },
-        onTapUp: (details) {
-          // Clear message when tap is released without dragging
-          widget.layoutController.updateCursorMessage?.call('');
-        },
-        // Handle pan gestures specifically for resize on mobile
-        onPanStart: (details) {
-          final localPosition = details.localPosition;
-          final cursorState = _determineCursor(localPosition);
-          
-          // Store the initial touch position and cursor state for tracking resize direction
-          _touchStartPosition = localPosition;
-          _currentCursorState = cursorState;
-          
-          // Update cursor message for resize operation
-          widget.layoutController.updateCursorMessage?.call(cursorState.message);
-          
-          // For resize operations, start the edit session
-          final r = onRightSide(localPosition.dx);
-          final l = onLeftSide(localPosition.dx);
-          final t = onTopSide(localPosition.dy);
-          final b = onBottomSide(localPosition.dy);
-          
-          // Only start resize if touching an edge
-          if (r || l || t || b) {
-            // Flag as dragging
-            widget.isDraggingNotifier.value = true;
-            
-            // Start edit session for resize (not transform)
-            widget.layoutController.startEdit(widget.id, false);
-          }
-        },
-        onPanUpdate: (details) {
-          // Skip if we didn't detect an edge touch on start
-          if (_touchStartPosition == null || !widget.isDraggingNotifier.value) return;
-          
-          // Update message periodically during resize to provide feedback
-          widget.layoutController.updateCursorMessage?.call(_currentCursorState.message);
-        },
-        onPanEnd: (details) {
-          // Clear resize state and message
-          _touchStartPosition = null;
-          
-          if (widget.isDraggingNotifier.value) {
-            // Save the edit session if we were dragging
-            widget.layoutController.saveEditSession();
-            widget.isDraggingNotifier.value = false;
-            
-            // Provide confirmation message
-            widget.layoutController.updateCursorMessage?.call("Resize complete");
-            
-            // Clear after brief delay
-            Future.delayed(const Duration(milliseconds: 500), () {
-              widget.layoutController.updateCursorMessage?.call('');
-            });
-          }
-        },
-        child: MouseRegion(
-          cursor: cursor,
-          onHover: _hover,
-          onExit: _exit,
-          child: result,
-        ),
-      );
-    } else {
-      // Even in non-edit mode, add basic touch feedback for mobile
-      result = GestureDetector(
-        onTap: () {
-          // Simple informational message on tap when not in edit mode
-          widget.layoutController.updateCursorMessage?.call("Enter edit mode to resize or move");
-          // Clear after brief delay
-          Future.delayed(const Duration(seconds: 1), () {
-            widget.layoutController.updateCursorMessage?.call('');
-          });
-        },
+      result = MouseRegion(
+        cursor: cursor,
+        onHover: _hover,
+        onExit: _exit,
         child: result,
       );
     }
