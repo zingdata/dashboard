@@ -97,7 +97,13 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
         _cursorState = isMobile ? DashboardCursorState.mobileGrabbing : DashboardCursorState.grabbing;
         cursor = _cursorState.cursor;
         widget.onCursorUpdate(cursor);
+        
+        // Update the global dragging state through the layout controller
+        widget.layoutController.updateDraggingState?.call(true);
       }
+    } else {
+      // When dragging stops, make sure the global dragging state is updated
+      widget.layoutController.updateDraggingState?.call(false);
     }
   }
 

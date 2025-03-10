@@ -25,7 +25,8 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
     required List<T> items,
   })  : _items = {},
         itemStorageDelegate = null,
-        _cursorMessageNotifier = ValueNotifier<String>('') {
+        _cursorMessageNotifier = ValueNotifier<String>(''),
+        _isDraggingNotifier = ValueNotifier<bool>(false) {
     for (var item in items) {
       _items[item.identifier] = item;
     }
@@ -39,18 +40,27 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
   /// error at the end of the [timout].
   DashboardItemController.withDelegate({Duration? timeout, required this.itemStorageDelegate})
       : _timeout = timeout ?? const Duration(seconds: 10),
-        _cursorMessageNotifier = ValueNotifier<String>('');
+        _cursorMessageNotifier = ValueNotifier<String>(''),
+        _isDraggingNotifier = ValueNotifier<bool>(false);
 
   /// Notifier that provides real-time cursor interaction messages for the UI
   final ValueNotifier<String> _cursorMessageNotifier;
   
+  /// Notifier that provides the current dragging state of dashboard items
+  final ValueNotifier<bool> _isDraggingNotifier;
+  
   /// Notifier that provides real-time cursor interaction messages
   /// Use this to display helpful messages in the UI based on what the user is doing
   ValueNotifier<String> get cursorMessageNotifier => _cursorMessageNotifier;
+  
+  /// Notifier that indicates whether any dashboard item is currently being dragged
+  /// Use this to update UI elements or provide visual feedback during dragging operations
+  ValueNotifier<bool> get isDraggingNotifier => _isDraggingNotifier;
 
   @override
   void dispose() {
     _cursorMessageNotifier.dispose();
+    _isDraggingNotifier.dispose();
     super.dispose();
   }
 
@@ -218,6 +228,14 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
         _cursorMessageNotifier.value = message;
       }
     };
+    
+    // Connect the dragging state callback to the notifier
+    _layoutController!.updateDraggingState = (isDragging) {
+      // Only update if the state actually changed to avoid unnecessary rebuilds
+      if (_isDraggingNotifier.value != isDragging) {
+        _isDraggingNotifier.value = isDragging;
+      }
+    };
   }
 
 // bool trySlideToTop(String id) {
@@ -236,6 +254,9 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   /// Callback function to update cursor messages on the frontend
   Function(String message)? updateCursorMessage;
+  
+  /// Callback function to update the dragging state on the frontend
+  Function(bool isDragging)? updateDraggingState;
 
   ///
   late DashboardItemController<T> itemController;

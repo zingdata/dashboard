@@ -349,6 +349,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
   void _onMoveStart(Offset local) {
     isDraggingNotifier.value = true;
+    
+    // Notify the frontend that dragging has started
+    widget.dashboardController.updateDraggingState?.call(true);
 
     var holdGlobal =
         Offset(local.dx - viewportDelegate.padding.left, local.dy - viewportDelegate.padding.top);
@@ -372,6 +375,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
           width: current.width);
       if (holdGlobal.dx < itemGlobal.x || holdGlobal.dy < itemGlobal.y) {
         _editing = null;
+        isDraggingNotifier.value = false;
+        widget.dashboardController.updateDraggingState?.call(false);
         setState(() {});
         return;
       }
@@ -470,6 +475,11 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       widget.dashboardController.editSession?.editing._originSize = null;
       speed = 0;
       widget.dashboardController.saveEditSession();
+      
+      // Make sure dragging state is reset if we clicked but didn't start a valid drag
+      isDraggingNotifier.value = false;
+      widget.dashboardController.updateDraggingState?.call(false);
+      
       widget.onScrollStateChange(true);
     }
   }
@@ -547,6 +557,9 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
   void _onMoveEnd() {
     isDraggingNotifier.value = false;
+    
+    // Notify the frontend that dragging has ended
+    widget.dashboardController.updateDraggingState?.call(false);
     
     // Check if we're on a mobile platform to use appropriate messages
     final bool isMobile = Theme.of(context).platform == TargetPlatform.android || 
