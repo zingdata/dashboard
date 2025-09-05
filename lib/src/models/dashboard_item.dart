@@ -46,6 +46,20 @@ class DashboardItem {
   /// the layout and storing it in memory, and this identifier helps
   /// determine the Widget that [itemBuilder] will return.
   String identifier;
+  
+  /// Internal field to store the current pixel size when available
+  /// This is automatically updated by the dashboard during rendering
+  ItemCurrentPosition? _currentSize;
+  
+  /// Gets the current pixel size that this item occupies in the dashboard
+  /// Returns null if the item is not currently rendered or if size hasn't been calculated yet
+  /// This provides access to the actual pixel dimensions (width, height) and position (x, y)
+  ItemCurrentPosition? get currentSize => _currentSize;
+  
+  /// Internal method to update the current size - called by dashboard internally
+  void _updateCurrentSize(ItemCurrentPosition size) {
+    _currentSize = size;
+  }
 
   /// Converts items to json encodable Map to store their layout.
   Map<String, dynamic> toMap() {

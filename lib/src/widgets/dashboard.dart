@@ -3,6 +3,19 @@ part of '../dashboard_base.dart';
 ///
 typedef DashboardItemBuilder<T extends DashboardItem> = Widget Function(T item);
 
+/// Enhanced builder typedef that includes the actual pixel size information
+/// that the dashboard item will occupy in the rendered layout
+typedef DashboardItemBuilderWithSize<T extends DashboardItem> = Widget Function(T item, ItemCurrentPosition size);
+
+/// Wrapper class to hold both builder types and ensure only one is provided
+class _DashboardItemBuilders<T extends DashboardItem> {
+  final DashboardItemBuilder<T>? simpleBuilder;
+  final DashboardItemBuilderWithSize<T>? sizeBuilder;
+  
+  _DashboardItemBuilders.simple(this.simpleBuilder) : sizeBuilder = null;
+  _DashboardItemBuilders.withSize(this.sizeBuilder) : simpleBuilder = null;
+}
+
 /// A list of widget arranged with hand or initially.
 ///
 /// [Dashboard] is scrolling widget that contains items which can
@@ -26,7 +39,7 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
   /// A list of widget arranged with hand or initially.
   Dashboard({
     super.key,
-    required this.itemBuilder,
+    DashboardItemBuilder<T>? itemBuilder,
     required this.dashboardItemController,
     this.slotCount = 8,
     this.scrollController,
@@ -52,8 +65,14 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
     this.itemGlobalPosition,
     this.itemStyle = const ItemStyle(),
     this.initNotifier,
-  })  : assert((slotHeight == null && slotAspectRatio == null) ||
+    DashboardItemBuilderWithSize<T>? itemBuilderWithSize,
+  })  : assert((itemBuilder != null) ^ (itemBuilderWithSize != null), 
+              'Exactly one of itemBuilder or itemBuilderWithSize must be provided'),
+        assert((slotHeight == null && slotAspectRatio == null) ||
             !(slotHeight != null && slotAspectRatio != null)),
+        _itemBuilders = itemBuilder != null 
+          ? _DashboardItemBuilders<T>.simple(itemBuilder)
+          : _DashboardItemBuilders<T>.withSize(itemBuilderWithSize!),
         editModeSettings = editModeSettings ?? EditModeSettings();
 
   /// [slotAspectRatio] determines slots height. Slot width determined by
@@ -85,7 +104,14 @@ class Dashboard<T extends DashboardItem> extends StatefulWidget {
   ///
   /// [cacheExtend] determines when the widget will creating / removing in
   /// the widget tree.
-  final DashboardItemBuilder<T> itemBuilder;
+  /// Internal wrapper that holds either the simple builder or the enhanced builder with size
+  final _DashboardItemBuilders<T> _itemBuilders;
+  
+  /// Legacy itemBuilder property for backward compatibility
+  DashboardItemBuilder<T>? get itemBuilder => _itemBuilders.simpleBuilder;
+  
+  /// New itemBuilderWithSize property for accessing the enhanced builder
+  DashboardItemBuilderWithSize<T>? get itemBuilderWithSize => _itemBuilders.sizeBuilder;
 
   /// The viewport has an area before and after the visible area to cache items
   /// that are about to become visible when the user scrolls.
@@ -460,7 +486,7 @@ class _DashboardState<T extends DashboardItem> extends State<Dashboard<T>>
           editModeSettings: widget.editModeSettings,
           cacheExtend: widget.cacheExtend,
           key: _stateKey,
-          itemBuilder: widget.itemBuilder,
+          itemBuilders: widget._itemBuilders,
           dashboardController: _layoutController,
           offset: offset,
           itemGlobalPosition: widget.itemGlobalPosition,

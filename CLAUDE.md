@@ -1,0 +1,122 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+This is a Flutter package called `dashboard` that provides a dynamic dashboard widget allowing users to create their own layouts with resize, move, and auto re-layout capabilities. The package is published to pub.dev and includes an example implementation.
+
+## Key Commands
+
+### Development Commands
+```bash
+# Run tests
+flutter test
+
+# Analyze code (lint checking)
+flutter analyze
+
+# Format code
+dart format .
+
+# Run example app
+cd example && flutter run
+
+# Build example for web
+cd example && flutter build web
+
+# Get dependencies
+flutter pub get
+
+# Publish package (dry run)
+flutter pub publish --dry-run
+```
+
+### Flutter Version Management
+This project uses FVM (Flutter Version Manager):
+```bash
+# Install Flutter version specified in .fvmrc
+fvm install
+
+# Use the project's Flutter version
+fvm flutter [command]
+```
+
+## Architecture Overview
+
+### Core Components
+
+**Main Entry Point**: `lib/dashboard.dart` - Exports the main library components
+**Core Library**: `lib/src/dashboard_base.dart` - Contains all implementation using Dart's `part`/`library` system
+
+### Key Classes Structure
+
+1. **Dashboard Widget** (`src/widgets/dashboard.dart`)
+   - Main widget that users interact with
+   - Manages scrolling, layout, and rendering
+   - Handles responsive slot-based grid system
+   - Supports both fixed items and delegate-based storage
+
+2. **DashboardItemController** (`src/controller/dashboard_controller.dart`)
+   - Manages dashboard items and their lifecycle
+   - Handles add/delete operations and layout changes
+   - Supports editing mode for interactive modifications
+
+3. **DashboardItem** (`src/models/dashboard_item.dart`)
+   - Base model for dashboard items
+   - Contains position (startX, startY) and dimensions (width, height)
+   - Supports min/max constraints and unique identifiers
+
+4. **Storage System** (`src/controller/dashboard_item_storage.dart`)
+   - `DashboardItemStorageDelegate` interface for persistence
+   - Supports both slot-specific and global layouts
+   - Handles async loading and saving of layouts
+
+5. **Edit Mode System**
+   - `EditModeSettings` - Configuration for editing behavior
+   - `EditModeBackgroundStyle` - Visual styling during editing
+   - `EditModePainter` - Custom painting for edit overlays
+
+### Layout System
+
+The dashboard uses a slot-based grid system:
+- **Slots**: Horizontal divisions determined by `slotCount`
+- **Aspect Ratio**: Slot height controlled by `slotAspectRatio` or fixed `slotHeight`
+- **Responsive**: Automatically adjusts to different screen sizes
+- **Auto-layout**: Items can slide to top and shrink to fit
+
+### Key Features Implementation
+
+1. **Drag & Drop**: Gesture handling in `DashboardItemWidget`
+2. **Resize**: Corner/edge detection and manipulation
+3. **Swapping**: Items can swap positions when dragged over each other (custom addition by Raza)
+4. **Persistence**: Storage delegate pattern for saving layouts
+5. **Animation**: Smooth transitions during layout changes
+
+## Example Usage Pattern
+
+The `example/` directory demonstrates typical usage:
+- **Storage Implementation**: `example/lib/storage.dart` shows custom storage delegate
+- **Item Builder**: `example/lib/main.dart` shows how to build dashboard items
+- **Custom Items**: `ColoredDashboardItem` extends `DashboardItem` with additional properties
+
+## Development Notes
+
+- Uses Flutter's `part`/`library` system - all implementation is in `dashboard_base.dart` with parts in `src/`
+- Custom additions marked with comments by "raza" (mounted checks, swapping feature, etc.)
+- Supports web, mobile, and desktop through Flutter's cross-platform capabilities
+- Includes extensive documentation and examples as shown in README.md
+
+## Testing
+
+- Test files located in `test/` directory
+- Example app tests in `example/test/`
+- Use `flutter test` to run all tests
+
+## Publishing
+
+This is a pub.dev package. When making changes:
+1. Update version in `pubspec.yaml`
+2. Update `CHANGELOG.md`
+3. Run `flutter pub publish --dry-run` to validate
+4. Use `flutter pub publish` to publish (requires pub.dev credentials)

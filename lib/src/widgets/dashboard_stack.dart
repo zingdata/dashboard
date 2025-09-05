@@ -6,7 +6,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
     required this.editModeSettings,
     required this.offset,
     required this.dashboardController,
-    required this.itemBuilder,
+    required this.itemBuilders,
     required this.cacheExtend,
     required this.maxScrollOffset,
     required this.onScrollStateChange,
@@ -26,7 +26,7 @@ class _DashboardStack<T extends DashboardItem> extends StatefulWidget {
   final Function(String id, bool isHovering)? onHover;
 
   ///
-  final DashboardItemBuilder<T> itemBuilder;
+  final _DashboardItemBuilders<T> itemBuilders;
 
   final ItemStyle itemStyle;
 
@@ -129,6 +129,24 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
     var l = widget.dashboardController._layouts![i!.identifier]!;
     i.layoutData = l.asLayout();
 
+    // Calculate the actual pixel size that the item will occupy
+    final itemSize = l._currentPosition(
+      viewportDelegate: viewportDelegate,
+      slotEdge: slotEdge,
+      verticalSlotEdge: verticalSlotEdge,
+    );
+
+    // Update the item's current size for convenience access
+    i._updateCurrentSize(itemSize);
+
+    // Use appropriate builder based on which one was provided
+    Widget childWidget;
+    if (widget.itemBuilders.simpleBuilder != null) {
+      childWidget = widget.itemBuilders.simpleBuilder!(i);
+    } else {
+      childWidget = widget.itemBuilders.sizeBuilder!(i, itemSize);
+    }
+
     _widgetsMap[id] = [
       l,
       Material(
@@ -138,7 +156,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         color: widget.itemStyle.color,
         clipBehavior: widget.itemStyle.clipBehavior ?? Clip.none,
         animationDuration: widget.itemStyle.animationDuration ?? kThemeChangeDuration,
-        child: widget.itemBuilder(i),
+        child: childWidget,
         //shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       id,
