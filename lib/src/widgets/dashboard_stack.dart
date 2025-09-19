@@ -367,7 +367,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
   void _onMoveStart(Offset local) {
     isDraggingNotifier.value = true;
-    
+
     // Notify the frontend that dragging has started
     widget.dashboardController.updateDraggingState?.call(true);
 
@@ -401,13 +401,14 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       HapticFeedback.selectionClick();
 
       // Check if we're on a mobile platform to use appropriate messages
-      final bool isMobile = Theme.of(context).platform == TargetPlatform.android || 
-                            Theme.of(context).platform == TargetPlatform.iOS;
+      final bool isMobile = Theme.of(context).platform == TargetPlatform.android ||
+          Theme.of(context).platform == TargetPlatform.iOS;
 
       if (itemGlobal.x + widget.editModeSettings.resizeCursorSide > holdGlobal.dx) {
         directions.add(AxisDirection.left);
         if (isMobile) {
-          widget.dashboardController.updateCursorMessage?.call('Touch and drag to resize from left');
+          widget.dashboardController.updateCursorMessage
+              ?.call('Touch and drag to resize from left');
         } else {
           widget.dashboardController.updateCursorMessage?.call('Resizing from left edge');
         }
@@ -423,7 +424,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
           }
         } else {
           if (isMobile) {
-            widget.dashboardController.updateCursorMessage?.call('Touch and drag to resize from top');
+            widget.dashboardController.updateCursorMessage
+                ?.call('Touch and drag to resize from top');
           } else {
             widget.dashboardController.updateCursorMessage?.call('Resizing from top edge');
           }
@@ -440,7 +442,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
           }
         } else {
           if (isMobile) {
-            widget.dashboardController.updateCursorMessage?.call('Touch and drag to resize from right');
+            widget.dashboardController.updateCursorMessage
+                ?.call('Touch and drag to resize from right');
           } else {
             widget.dashboardController.updateCursorMessage?.call('Resizing from right edge');
           }
@@ -452,17 +455,20 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
           if (isMobile) {
             widget.dashboardController.updateCursorMessage?.call('Drag corner to resize both ways');
           } else {
-            widget.dashboardController.updateCursorMessage?.call('Resizing from bottom-left corner');
+            widget.dashboardController.updateCursorMessage
+                ?.call('Resizing from bottom-left corner');
           }
         } else if (directions.contains(AxisDirection.right)) {
           if (isMobile) {
             widget.dashboardController.updateCursorMessage?.call('Drag corner to resize both ways');
           } else {
-            widget.dashboardController.updateCursorMessage?.call('Resizing from bottom-right corner');
+            widget.dashboardController.updateCursorMessage
+                ?.call('Resizing from bottom-right corner');
           }
         } else {
           if (isMobile) {
-            widget.dashboardController.updateCursorMessage?.call('Touch and drag to resize from bottom');
+            widget.dashboardController.updateCursorMessage
+                ?.call('Touch and drag to resize from bottom');
           } else {
             widget.dashboardController.updateCursorMessage?.call('Resizing from bottom edge');
           }
@@ -473,7 +479,8 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       } else {
         _holdDirections = null;
         if (isMobile) {
-          widget.dashboardController.updateCursorMessage?.call('Moving item - lift finger to place');
+          widget.dashboardController.updateCursorMessage
+              ?.call('Moving item - lift finger to place');
         } else {
           widget.dashboardController.updateCursorMessage?.call('Moving item - drag to reposition');
         }
@@ -493,11 +500,11 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       widget.dashboardController.editSession?.editing._originSize = null;
       speed = 0;
       widget.dashboardController.saveEditSession();
-      
+
       // Make sure dragging state is reset if we clicked but didn't start a valid drag
       isDraggingNotifier.value = false;
       widget.dashboardController.updateDraggingState?.call(false);
-      
+
       widget.onScrollStateChange(true);
     }
   }
@@ -516,17 +523,18 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       var e = widget.dashboardController._endsTree.lastKey() ?? 0;
 
       // Check if we're on a mobile platform to use appropriate messages
-      final bool isMobile = Theme.of(context).platform == TargetPlatform.android || 
-                            Theme.of(context).platform == TargetPlatform.iOS;
+      final bool isMobile = Theme.of(context).platform == TargetPlatform.android ||
+          Theme.of(context).platform == TargetPlatform.iOS;
 
       if (_editingResize) {
         // Update cursor message during resize
         if (isMobile) {
           widget.dashboardController.updateCursorMessage?.call('Resizing - lift finger when done');
         } else {
-          widget.dashboardController.updateCursorMessage?.call('Resizing - release to apply changes');
+          widget.dashboardController.updateCursorMessage
+              ?.call('Resizing - release to apply changes');
         }
-        
+
         var scrollDifference = pixels - _startScrollPixels!;
         var differences = <String>{};
         var resizeMoveResult = _editing!._resizeMove(
@@ -557,7 +565,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         } else {
           widget.dashboardController.updateCursorMessage?.call('Moving - release to place item');
         }
-        
+
         var resizeMoveResult =
             _editing!._transformUpdate(local - _moveStartOffset!, pixels - _startScrollPixels!);
         if (resizeMoveResult != null && resizeMoveResult.isChanged) {
@@ -575,14 +583,14 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
 
   void _onMoveEnd() {
     isDraggingNotifier.value = false;
-    
+
     // Notify the frontend that dragging has ended
     widget.dashboardController.updateDraggingState?.call(false);
-    
+
     // Check if we're on a mobile platform to use appropriate messages
-    final bool isMobile = Theme.of(context).platform == TargetPlatform.android || 
-                          Theme.of(context).platform == TargetPlatform.iOS;
-    
+    final bool isMobile = Theme.of(context).platform == TargetPlatform.android ||
+        Theme.of(context).platform == TargetPlatform.iOS;
+
     // Update cursor message when operation ends
     if (_editing != null) {
       if (_editingResize) {
@@ -599,7 +607,7 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
         }
       }
     }
-    
+
     _editing?._key = _keys[_editing!.id]!;
     _editing?._key.currentState
         ?._setLast(_editing!._transform?.value, _editing!._resizePosition?.value)
@@ -612,10 +620,12 @@ class _DashboardStackState<T extends DashboardItem> extends State<_DashboardStac
       _holdDirections = null;
       _startScrollPixels = null;
       widget.dashboardController.saveEditSession();
-      
+
       // Clear message after a short delay to allow feedback to be visible
       Future.delayed(const Duration(milliseconds: 800), () {
-        widget.dashboardController.updateCursorMessage?.call('');
+        if (!widget.dashboardController.itemController.isDraggingNotifier.value) {
+          widget.dashboardController.updateCursorMessage?.call('');
+        }
       });
     });
     speed = 0;
