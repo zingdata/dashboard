@@ -60,6 +60,7 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
     _multiplierAnimationController.dispose();
     widget.itemCurrentLayout.removeListener(_listen);
     widget.isDraggingNotifier.removeListener(_onDraggingStateChanged);
+    _tapFeedbackTimer?.cancel();
     super.dispose();
   }
 
@@ -193,21 +194,69 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       // Only update if we're actually changing state
       final cursorChanged = cursor != MouseCursor.defer;
       final messageChanged = _cursorState.message.isNotEmpty;
-      
+
       _cursorState = DashboardCursorState.none;
       cursor = MouseCursor.defer;
-      
+
       // Update message immediately
       if (messageChanged) {
         widget.layoutController.updateCursorMessage?.call('');
       }
-      
+
       // Only call setState if cursor changed
       if (cursorChanged) {
         setState(() {});
       }
-      
+
       widget.onCursorUpdate(cursor);
+    }
+  }
+
+  Timer? _tapFeedbackTimer;
+
+  void _handleMobileTap(TapDownDetails details) {
+    // Only handle taps on mobile platforms in edit mode
+    final bool isMobile = Theme.of(context).platform == TargetPlatform.android ||
+                          Theme.of(context).platform == TargetPlatform.iOS;
+
+    if (!isMobile || !onEditMode) return;
+
+    // Cancel any existing timer
+    _tapFeedbackTimer?.cancel();
+
+    // Determine the appropriate feedback message based on tap location
+    final tapPosition = details.localPosition;
+    final feedbackState = _determineTapFeedbackState(tapPosition);
+
+    // Show the feedback message
+    widget.layoutController.updateCursorMessage?.call(feedbackState.message);
+
+    // Set a timer to clear the message after 2.5 seconds
+    _tapFeedbackTimer = Timer(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        widget.layoutController.updateCursorMessage?.call('');
+      }
+    });
+  }
+
+  DashboardCursorState _determineTapFeedbackState(Offset localPosition) {
+    var x = localPosition.dx;
+    var y = localPosition.dy;
+    var r = onRightSide(x);
+    var l = onLeftSide(x);
+    var t = onTopSide(y);
+    var b = onBottomSide(y);
+
+    // Determine if tap is on corner, edge, or center
+    if ((r && (b || t)) || (l && (b || t))) {
+      // Tap is on a corner
+      return DashboardCursorState.mobileTapResizeCorner;
+    } else if (r || l || b || t) {
+      // Tap is on an edge
+      return DashboardCursorState.mobileTapResizeEdge;
+    } else {
+      // Tap is in the center
+      return DashboardCursorState.mobileTapMove;
     }
   }
 
@@ -269,11 +318,16 @@ class _DashboardItemWidgetState extends State<_DashboardItemWidget> with TickerP
       if (widget.layoutController.absorbPointer) {
         result = AbsorbPointer(child: result);
       }
-      result = MouseRegion(
-        cursor: cursor,
-        onHover: _hover,
-        onExit: _exit,
-        child: result,
+
+      // Add GestureDetector for mobile tap feedback
+      result = GestureDetector(
+        onTapDown: _handleMobileTap,
+        child: MouseRegion(
+          cursor: cursor,
+          onHover: _hover,
+          onExit: _exit,
+          child: result,
+        ),
       );
     }
 

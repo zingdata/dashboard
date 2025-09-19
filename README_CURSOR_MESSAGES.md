@@ -6,6 +6,8 @@ This feature allows you to display helpful guidance messages to users based on t
 
 When users hover over or interact with dashboard items, the system automatically detects what type of interaction is possible (move, resize, etc.) and provides a relevant message through a high-performance ValueNotifier. The system is platform-aware and provides different messages for desktop and mobile interactions.
 
+**New in this version**: Mobile users now get immediate feedback when they tap dashboard items, guiding them to use long press for actual interactions.
+
 Additionally, the system tracks whether any item is currently being dragged, allowing you to adjust UI elements accordingly.
 
 ## Usage Example
@@ -126,6 +128,14 @@ The system automatically provides context-appropriate messages for different int
 - **Resizing corners**: "Drag corner to resize in both directions"
 - **Selecting**: "Tap to select, double-tap to edit"
 
+#### Mobile Tap Feedback (New)
+When users tap (instead of long press) on mobile devices, they receive immediate guidance:
+- **Tap in center area**: "Long press to move item"
+- **Tap on edges**: "Long press edge to resize"
+- **Tap on corners**: "Long press corner to resize in both directions"
+
+These messages appear instantly on tap and automatically disappear after 2.5 seconds, helping users discover the correct interaction method.
+
 The system automatically detects the platform (mobile or desktop) and provides the appropriate cursor states and messages.
 
 ### Dragging State Tracking
@@ -182,6 +192,38 @@ The system is optimized for performance:
 3. Separates cursor visual updates from message/state updates to minimize UI redraws
 4. Implements efficient hover detection to reduce garbage collection pressure
 5. Platform-specific messages that adapt to the user's device (mobile or desktop)
+6. Mobile tap feedback uses efficient timer-based cleanup to prevent memory leaks
+7. Tap detection only activates on mobile platforms to minimize overhead on desktop
+
+## Mobile Tap Feedback Implementation
+
+### How It Works
+
+The mobile tap feedback system automatically activates when users tap dashboard items on mobile devices (Android/iOS) while in edit mode:
+
+1. **Platform Detection**: Uses `Theme.of(context).platform` to detect mobile devices
+2. **Location Analysis**: Reuses existing zone detection logic to determine tap location (center, edge, or corner)
+3. **Contextual Messages**: Shows appropriate guidance based on where the user tapped
+4. **Auto-cleanup**: Messages automatically disappear after 2.5 seconds
+5. **Non-destructive**: Preserves all existing long press and drag functionality
+
+### Technical Details
+
+The implementation includes three new cursor states:
+- `DashboardCursorState.mobileTapMove`: "Long press to move item"
+- `DashboardCursorState.mobileTapResizeEdge`: "Long press edge to resize"
+- `DashboardCursorState.mobileTapResizeCorner`: "Long press corner to resize in both directions"
+
+### Integration Requirements
+
+No additional setup is required. The feature works automatically with:
+- Existing `DashboardCursorMessageWidget` for message display
+- Current edit mode settings (`EditModeSettings.longPressEnabled`)
+- Standard dashboard controller and message notification system
+
+The tap detection uses `GestureDetector.onTapDown` and only activates when both conditions are met:
+- Platform is mobile (Android or iOS)
+- Dashboard is in edit mode
 
 ## Custom Messages and State Handling
 

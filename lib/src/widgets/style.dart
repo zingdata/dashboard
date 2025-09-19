@@ -205,4 +205,20 @@ class DashboardCursorState {
     SystemMouseCursors.resizeUpLeftDownRight,
     'Drag corner to resize in both directions'
   );
+
+  // Mobile tap feedback states to guide users to use long press
+  static const DashboardCursorState mobileTapMove = DashboardCursorState(
+    SystemMouseCursors.click,
+    'Long press to move item'
+  );
+
+  static const DashboardCursorState mobileTapResizeEdge = DashboardCursorState(
+    SystemMouseCursors.click,
+    'Long press edge to resize'
+  );
+
+  static const DashboardCursorState mobileTapResizeCorner = DashboardCursorState(
+    SystemMouseCursors.click,
+    'Long press corner to resize in both directions'
+  );
 }

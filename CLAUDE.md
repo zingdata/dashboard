@@ -10,8 +10,14 @@ This is a Flutter package called `dashboard` that provides a dynamic dashboard w
 
 ### Development Commands
 ```bash
-# Run tests
+# Run all tests
 flutter test
+
+# Run specific test file
+flutter test test/specific_test.dart
+
+# Run tests with verbose output
+flutter test --verbose
 
 # Analyze code (lint checking)
 flutter analyze
@@ -19,17 +25,29 @@ flutter analyze
 # Format code
 dart format .
 
+# Get dependencies
+flutter pub get
+
+# Clean build artifacts
+flutter clean
+
 # Run example app
 cd example && flutter run
+
+# Run example app on specific device
+cd example && flutter run -d chrome
 
 # Build example for web
 cd example && flutter build web
 
-# Get dependencies
-flutter pub get
+# Build example for Android APK
+cd example && flutter build apk
 
 # Publish package (dry run)
 flutter pub publish --dry-run
+
+# Publish package to pub.dev
+flutter pub publish
 ```
 
 ### Flutter Version Management
@@ -103,15 +121,22 @@ The `example/` directory demonstrates typical usage:
 ## Development Notes
 
 - Uses Flutter's `part`/`library` system - all implementation is in `dashboard_base.dart` with parts in `src/`
-- Custom additions marked with comments by "raza" (mounted checks, swapping feature, etc.)
+- Custom additions marked with comments by "raza" include:
+  - Mounted checks for widget state safety
+  - Item swapping feature when dragging over other items
+  - Enhanced gesture handling improvements
 - Supports web, mobile, and desktop through Flutter's cross-platform capabilities
 - Includes extensive documentation and examples as shown in README.md
+- The `example/` directory contains a complete implementation with custom storage delegate
+- Main library entry point is `lib/dashboard.dart` which exports `dashboard_base.dart` and style components
 
 ## Testing
 
 - Test files located in `test/` directory
 - Example app tests in `example/test/`
 - Use `flutter test` to run all tests
+- Run specific tests with `flutter test test/filename_test.dart`
+- Note: Current test suite is minimal (contains placeholder TODO test)
 
 ## Publishing
 
