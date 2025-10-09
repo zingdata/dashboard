@@ -159,7 +159,7 @@ class DashboardItemController<T extends DashboardItem> with ChangeNotifier {
 
   T _getItemWithLayout(String id) {
     if (!_isAttached) throw Exception("Not Attached");
-    return _items[id]!..layoutData = _layoutController!._layouts![id]!.origin;
+    return _items[id]!..layoutData = _layoutController!._layouts[id]!.origin;
   }
 
   ///
@@ -298,7 +298,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   late double slotEdge, verticalSlotEdge;
 
   ///
-  Map<String, _ItemCurrentLayout>? _layouts;
+  Map<String, _ItemCurrentLayout> _layouts = {};
 
   final SplayTreeMap<int, String> _startsTree = SplayTreeMap<int, String>();
   final SplayTreeMap<int, String> _endsTree = SplayTreeMap<int, String>();
@@ -309,7 +309,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void startEdit(String id, bool transform) {
     editSession =
-        _EditSession(layoutController: this, editing: _layouts![id]!, transform: transform);
+        _EditSession(layoutController: this, editing: _layouts[id]!, transform: transform);
   }
 
   void saveEditSession() {
@@ -324,7 +324,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
               .toList(),
           slotCount);
       for (var i in editSession!._changes) {
-        _layouts![i]!._clearListeners();
+        _layouts[i]!._clearListeners();
       }
     }
 
@@ -341,7 +341,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void cancelEditSession() {
     if (editSession == null) return;
-    _layouts!.forEach((key, value) {
+    _layouts.forEach((key, value) {
       value._mount(this, key);
     });
     editSession = null;
@@ -352,7 +352,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void deleteAll(List<String> ids) {
     for (var id in ids) {
-      var l = _layouts![id];
+      var l = _layouts[id];
       if (l != null) {
         var indexes = getItemIndexes(l.origin);
         _startsTree.remove(indexes.first);
@@ -364,14 +364,14 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
         /// added by raza
         _indexesTree.clear();
 
-        _layouts!.remove(id);
+        _layouts.remove(id);
       }
     }
     notifyListeners();
   }
 
   void delete(String id) {
-    var l = _layouts![id];
+    var l = _layouts[id];
     var indexes = getItemIndexes(l!.origin);
     _startsTree.remove(indexes.first);
     _endsTree.remove(indexes.last);
@@ -380,12 +380,12 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       _indexesTree.remove(i);
     }
 
-    _layouts!.remove(id);
+    _layouts.remove(id);
     notifyListeners();
   }
 
   void add(DashboardItem item, [bool mountToTop = true]) {
-    _layouts![item.identifier] = _ItemCurrentLayout(item.layoutData);
+    _layouts[item.identifier] = _ItemCurrentLayout(item.layoutData);
     this.mountToTop(item.identifier,
         mountToTop ? 0 : getIndex([_adjustToPosition(item.layoutData), item.layoutData.startY]));
     notifyListeners();
@@ -403,7 +403,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
 
   void addAll(List<DashboardItem> items, {bool mountToTop = true}) {
     for (var item in items) {
-      _layouts![item.identifier] = _ItemCurrentLayout(item.layoutData);
+      _layouts[item.identifier] = _ItemCurrentLayout(item.layoutData);
 
       int startX;
 
@@ -606,7 +606,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   }
 
   void _reIndexItem(ItemLayout itemLayout, String id) {
-    var l = _layouts![id]!;
+    var l = _layouts[id]!;
     _removeFromIndexes(l.origin, id);
     l._height = null;
     l._width = null;
@@ -624,8 +624,8 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       _indexesTree[index] = id;
     }
 
-    _layouts![id]!.origin = itemLayout.._haveLocation = true;
-    _layouts![id]!._mount(this, id);
+    _layouts[id]!.origin = itemLayout.._haveLocation = true;
+    _layouts[id]!._mount(this, id);
   }
 
   bool? shrinkOnMove;
@@ -684,7 +684,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
   ///
   bool mountToTop(String id, [int start = 0]) {
     try {
-      var itemCurrent = _layouts![id]!;
+      var itemCurrent = _layouts[id]!;
 
       _removeFromIndexes(itemCurrent, id);
 
@@ -730,7 +730,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       var not = <String>[];
 
       layouts:
-      for (var i in _layouts!.entries.where((element) => element.value._haveLocation)) {
+      for (var i in _layouts.entries.where((element) => element.value._haveLocation)) {
         if (_axis == Axis.vertical && i.value.width > slotCount) {
           // Check fit, if necessary and possible, edit
           if (i.value.minWidth > slotCount) {
@@ -754,7 +754,7 @@ class _DashboardLayoutController<T extends DashboardItem> with ChangeNotifier {
       }
 
       layouts:
-      for (var i in _layouts!.entries.where((element) => !element.value._haveLocation)) {
+      for (var i in _layouts.entries.where((element) => !element.value._haveLocation)) {
         if (_axis == Axis.vertical && i.value.width > slotCount) {
           // Check fit, if necessary and possible, edit
           if (i.value.minWidth > slotCount) {
